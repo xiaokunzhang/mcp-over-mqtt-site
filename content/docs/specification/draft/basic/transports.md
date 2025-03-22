@@ -5,7 +5,7 @@ weight: 10
 ---
 
 {{< callout type="info" >}}
-This page is modified from [MCP-Architecture](https://spec.modelcontextprotocol.io/specification/draft/basic/transports/) for the MQTT transport layer, modifications include:
+This page is modified from [MCP-Transport](https://spec.modelcontextprotocol.io/specification/draft/basic/transports/) for the MQTT transport layer, modifications include:
 
 - Rewrite for MQTT transport
 {{< /callout >}}
@@ -31,6 +31,8 @@ MCP uses JSON-RPC to encode messages. JSON-RPC messages **MUST** be UTF-8 encode
 - **service-name-filter**: The topic filter to match the `service-name`.
 
 - **service-id**: The MQTT Client ID of the MCP Server. Any string except `/`. It must be globally unique and will also be included in the topic.
+
+- **resource-id**: The resource ID identifies a resource that the server is managing. Any string except `/`. It must be unique within the service.
 
 - **mcp-client-id**: The MQTT Client ID of the client. Any string except `/`. It must be globally unique and will be included in the topic.
 
@@ -74,43 +76,42 @@ When scaling up, existing MCP Clients remain connected to the old service proces
 
 When scaling down, established RPC channels are interrupted, causing MCP Clients to re-initiate initialization requests to the MCP Server, thereby connecting to another service process.
 
-## Topics and Message Channels  
+# MQTT Requirements and Conventions
 
-MCP over MQTT transmits messages through MQTT topics, where each MQTT topic is referred to as a "channel" This protocol includes the following message channels:  
+## Message Channels (Topics) 
 
-- **Server Control Channel**: `$mcp-service/<service-name>`  
-  Used for sending and receiving initialization messages and other control messages.  
+MCP over MQTT transmits messages through MQTT topics, where each MQTT topic is referred to as a "channel". This protocol includes the following message channels:  
 
-- **Server Capability Update Channel**: `$mcp-service/capability-change/<service-id>/<service-name>`  
-  Used for sending and receiving server capability update messages.  
+| Channel Name                    | Topic Name                                            | Description |
+|---------------------------------|-------------------------------------------------------|-------------|
+| Server Control Channel          | `$mcp-service/<service-name>`                         | Used for sending and receiving initialization messages and other control messages. |
+| Server Capability Change Channel| `$mcp-service/capability-change/<service-id>/<service-name>` | Used for sending and receiving server capability list changed notification. |
+| Server Resource Update Channel| `$mcp-service/resource-update/<service-id>/<resource-id>` | Used for sending and receiving server resource updated notification. |
+| Service Discovery Channel       | `$mcp-service/presence/<service-id>/<service-name>`   | Used for sending and receiving server online/offline status messages. |
+| Client Capability Change Channel| `$mcp-client/capability-change/<mcp-client-id>`       | Used for sending and receiving client capability list changed notification. |
+| RPC Channel                     | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`    | Used for sending and receiving RPC requests, RPC responses, and notification messages. |
 
-- **Service Discovery Channel**: `$mcp-service/presence/<service-id>/<service-name>`  
-  Used for sending and receiving server online/offline status messages.  
+## MQTT Version
 
-- **Client Capability Update Channel**: `$mcp-client/capability-change/<mcp-client-id>`  
-  Used for sending and receiving client capability update messages.  
+The server and client **MUST** use MQTT version 5.0.
 
-- **RPC Channel**: `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`  
-  Used for sending and receiving RPC requests, RPC responses, and notification messages.
+## QoS
 
-## MQTT Requirements and Conventions
+The QoS level for all messages **MUST** be 1.
 
-- **MQTT Version**: The server and client **MUST** use MQTT version 5.0.
-- **QoS**: The QoS level for all messages **MUST** be 1.
-
-## MQTT ClientID
+## MQTT Client ID
 
 ### Server Coordinator
 
-The ClientID of the Coordinator can be any string except `/`, referred to as service-id.
+The Client ID of the Coordinator can be any string except `/`, referred to as `service-id`.
 
 ### Server Worker
 
-The ClientID of the Worker is `<service-id>:<ID>`, where service-id is the ClientID of the Coordinator, and `<ID>` can be any string except `/`.
+The Client ID of the Worker is `<service-id>:<ID>`, where `<service-id>` is the Client ID of the Coordinator, and `<ID>` can be any string except `/`.
 
 ### MCP Client
 
-The ClientID of the MCP Client, referred to as `mcp-client-id`, can be any string except `/`.
+The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any string except `/`.
 
 ## MQTT Topics and Topic Filters
 
@@ -118,36 +119,44 @@ The ClientID of the MCP Client, referred to as `mcp-client-id`, can be any strin
 
 | Subscriber         | Topic Filter                                         | Explanation |
 |-------------------|----------------------------------------------------|-------------|
-| Server Coordinator | `$share/any/$mcp-service/<service-name>`          | The control channel of the MCP server to receive control plane messages. We use shared subscription to force a message only goes to exactly 1 coordinator. |
-| Server Coordinator | `$mcp-client/capability-change/<mcp-client-id>`   | The client’s capability change channel to receive capability updates of the clients. |
+| Server Coordinator | `$share/any/$mcp-service/<service-name>`          | The control channel of the MCP server to receive control plane messages. We use shared subscription to force a message only goes to exactly one coordinator. |
+| Server Worker | `$mcp-client/capability-change/<mcp-client-id>`   | The client’s capability change channel to receive capability list changed notification of the clients. |
 | Server Worker      | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` <br> - Set `no local` flag | The RPC channel to receive RPC requests, RPC responses, and notifications from a client. |
 
 ### Topics that MCP Server Publishes to
 
 | Publisher          | Topic Name                                            | Messages |
 |-------------------|------------------------------------------------------|----------|
-| Server Coordinator | `$mcp-service/capability-change/<service-id>/<service-name>` | Capability updated messages. See the details below this table. |
-| Server Coordinator | `$mcp-service/presence/<service-id>/<service-name>` <br> - Retain Flag: true <br> - Also set as a will topic to clear the retain message when offline | Presence messages for the MCP Server. <br> See the details below this table. |
-| Server Worker      | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` <br> - Set as a will topic and the will msg is an offline notification | RPC requests, responses and notifications. <br> The offline msg (set will topic) is also a notification sent on this channel. |
+| Server Coordinator | `$mcp-service/capability-change/<service-id>/<service-name>` | capability changed notification.|
+| Server Coordinator | `$mcp-service/presence/<service-id>/<service-name>` <br> - Retain Flag: true <br> - Also set as a will topic with empty payload to clear the retain message when offline | Presence messages for the MCP Server. <br> See the details below this table. |
+| Server Coordinator | `$mcp-service/resource-update/<service-id>/<resource-id>` | Resource update notification.|
+| Server Worker      | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` <br> - Set as a will topic with the payload to the `disconnected` notification | RPC requests, responses and notifications. |
 
 **Details:**
 
-The Presence message only contains service description information to avoid message size overhead. Detailed tool parameters are included in the capability message:
+The presence message **SHOULD** provide only limited information about the service to avoid excessive message size:
+
+- A brief description of the service's functionality to help clients determine which services they need to call.
+- Some metadata, such as hints about the permissions required to access this service, to help clients quickly assess whether they have access.
+
+More detailed information, such as parameter details of the tools, **SHOULD** be included in the capability message instead when the client initializes the service:
 
 ```json
-{"description": "This is a comprehensive description that details the functionalities provided by this service. If tools are provided, it explains which tools are available and their purposes but does not include tool parameters to reduce message size."}
-```
-
-Format of the capability change message:
-
-```json
-{"capability": {"<capability-name>": {...}}}
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/service-online",
+  "params": {
+      "description": "This is a brief description about the functionalities provided by this service to allow clients to choose as needed. If tools are provided, it explains which tools are available but does not include tool parameters to reduce message size.",
+      "metadata": {}
+  }
+}
 ```
 
 ### Topics that MCP Client Subscribes to
 | Subscriber | Topic Filter                                         | Explanation |
 |------------|------------------------------------------------------|-------------|
-| Client     | `$mcp-service/capability-change/+/<service-name-filter>` | The capability change channel to receive capability updates of the service. |
+| Client     | `$mcp-service/capability-change/+/<service-name-filter>` | The capability change channel to receive capability list changed notification of the service. |
+| Client     | `$mcp-service/resource-update/+/<resource-id>` | The resource update channel to receive resource update notification of the service. |
 | Client     | `$mcp-service/presence/+/<service-name-filter>`      | The service discovery channel to receive the presence message of the service. |
 | Client     | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name-filter>` <br> - Set `no local` flag | The RPC channel to receive PRC requests, responses and notifications sent by the MCP server. |
 
@@ -156,7 +165,7 @@ Format of the capability change message:
 | Publisher | Topic Name                                         | Messages |
 |-----------|---------------------------------------------------|----------|
 | Client    | `$mcp-service/<service-name>`                     | Send control plane messages like initialize. |
-| Client    | `$mcp-client/capability-change/<mcp-client-id>`   | Send client capability changes |
+| Client    | `$mcp-client/capability-change/<mcp-client-id>`   | Send client capability list changed notification |
 | Client    | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` | The RPC channel to send RPC requests/responses to a specific server. |
 
 ## MQTT Authentication and Authorization

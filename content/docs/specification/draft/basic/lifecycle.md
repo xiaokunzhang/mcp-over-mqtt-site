@@ -5,7 +5,7 @@ weight: 30
 ---
 
 {{< callout type="info" >}}
-This page is modified from [MCP-Architecture](https://spec.modelcontextprotocol.io/specification/draft/basic/lifecyle/) for the MQTT transport layer, modifications include:
+This page is modified from [MCP-Lifecycle](https://spec.modelcontextprotocol.io/specification/draft/basic/lifecycle/) for the MQTT transport layer, modifications include:
 
 - Rewrite for MQTT transport
 {{< /callout >}}
@@ -28,8 +28,7 @@ sequenceDiagram
     activate Client
     Client->>+Server: initialize request
     Server-->>Client: initialize response
-    Client--)Server: client accepted notification
-    Server--)Client: server accepted notification
+    Client--)Server: initialized notification
 
     Note over Client,Server: Operation Phase
     rect rgb(200, 220, 250)
@@ -48,11 +47,11 @@ sequenceDiagram
 
 After the MCP server starts, it registers its service with the MQTT Broker. The channel (MQTT topic) for service discovery and registry is: `$mcp-service/presence/<service-id>/<service-name>`.
 
-The message payload **SHOULD** comprehensively describe the functionalities provided by the service, but to reduce the message size, it **SHOULD NOT** include overly detailed information such as function parameters. This topic **MUST** have the Retained Flag set to True, and in the CONNECT message, it **MUST** also be set as the Last Will Msg with an empty payload.
+The message payload **SHOULD** briefly describe the functionalities provided by the service. To reduce the message size, it **SHOULD NOT** include overly detailed information such as tool parameters. This topic **MUST** have the Retained Flag set to True, and in the CONNECT message, it **MUST** also be set as the Last Will Msg with an empty payload.
 
 The client can subscribe to the `$mcp-service/presence/+/<service-name-filter>` topic at any time, where `<service-name-filter>` is a filter for the service name.
 
-For example, if the client determines through its permissions that it can only access services of type `<service-type>/<sub-type>`, it can subscribe to `$mcp-service/presence/+/<service-type>/<sub-type>/#`, thereby subscribing to the service discovery channel for all services of the `<sub-type>` type at once.
+For example, if the service name is `<service-type>/<sub-type>/<name>`, and the client determines through its permissions that it can only access services of type `<service-type>/<sub-type>`, it can subscribe to `$mcp-service/presence/+/<service-type>/<sub-type>/#`, thereby subscribing to the service discovery channel for all services of the `<sub-type>` type at once.
 
 Although the client can subscribe to `$mcp-service/presence/+/#` to get all types of services, the administrator might restrict it through ACL (Access Control List) on the MQTT Broker to only send and receive messages on RPC channels like `$mcp-rpc-endpoint/<mcp-client-id>/<service-type>/<sub-type>/#`. Therefore, subscribing to overly broad topics is not useful. By designing the `<service-name-filter>` appropriately, the client can reduce interference from irrelevant information.
 
@@ -79,6 +78,7 @@ If the coordinator supports the requested protocol version, it assigns a worker 
 The client **MUST** initiate this phase by sending an `initialize` request containing:
 
 - Protocol version supported
+- Client capabilities
 - Client implementation information
 
 ```json
@@ -88,6 +88,12 @@ The client **MUST** initiate this phase by sending an `initialize` request conta
   "method": "initialize",
   "params": {
     "protocolVersion": "2024-11-05",
+    "capabilities": {
+      "roots": {
+        "listChanged": true
+      },
+      "sampling": {}
+    },
     "clientInfo": {
       "name": "ExampleClient",
       "version": "1.0.0"
@@ -125,40 +131,21 @@ The server **MUST** respond with its own capabilities and information:
 }
 ```
 
-After successful initialization, on the RPC channel, the client **MUST** send an `accepted` notification
-to indicate it has accepted the negotiation, and is ready to begin normal operations. The notification **MUST** include the client's capabilities:
+After successful initialization, the client MUST send an initialized notification to indicate it is ready to begin normal operations:
 
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "notifications/accepted",
-  "params": {
-    "capabilities": {
-      "roots": {
-        "listChanged": true
-      },
-      "sampling": {}
-    }
-  }
-}
-```
-
-If the server accepts the capabilities, on the RPC channel, the server worker **MUST** send an `accepted` notification to indicate it has accepted the negotiation, and is ready to begin normal operations:
-
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "notifications/accepted"
+  "method": "notifications/initialized"
 }
 ```
 
 - The client **SHOULD NOT** send requests other than
-  [pings]({{< ref "/docs/specification/draft/basic/utilities/ping" >}}) before receiving
-  the `accepted` notification.
+  [pings]({{< ref "/docs/specification/draft/basic/utilities/ping" >}}) before the server has responded to the initialize request.
 - The server **SHOULD NOT** send requests other than
   [pings]({{< ref "/docs/specification/draft/basic/utilities/ping" >}}) and
   [logging]({{< ref "/docs/specification/draft/server/utilities/logging" >}}) before receiving
-  the `accepted` notification.
+  the `initialized` notification.
 
 #### Version Negotiation
 
@@ -198,23 +185,26 @@ Capability objects can describe sub-capabilities like:
 
 ### Capability Update
 
-After the MCP Client negotiates capabilities with the MCP Server Worker, both parties cache each other's capability lists. Then, they obtain updated capabilities by subscribing to each other's capability update topics.
-
 Before initiating the Initialize request, the MCP Client must subscribe to the MCP Server's capability update topic: `$mcp-service/capability-change/+/<service-name-filter>`, where `<service-name-filter>` is a filter for the service name.
 
 For example, during the service discovery phase, if a service named `<service-type>/<sub-type>/<name>` is available, the client can subscribe to `$mcp-service/capability-change/+/<service-type>/<sub-type>/#`, thereby subscribing to the capability update channel for all services of the `<sub-type>` type at once.
 
-The MCP Server Worker first subscribes to the client's capability update channel: `$mcp-client/capability-change/<mcp-client-id>`. Then, in the Initialize Response message, it carries the server's complete capability information.
+The MCP Server Worker first subscribes to the client's capability update channel: `$mcp-client/capability-change/<mcp-client-id>`. Then it sends the initialize response message and carries the server's complete capability information.
 
-Finally, the MCP Client includes its complete capability information in its Accepted message.
+If there are subsequent capability list updates:
 
-If there are subsequent capability updates:
+- The client sends a notification to: `$mcp-client/capability-change/<mcp-client-id>`
 
-- The client sends the updated capability to: `$mcp-client/capability-change/<mcp-client-id>`
+- The server (coordinator) will send a notification to: `$mcp-service/capability-change/<service-id>/<service-name>`
 
-- The server (Coordinator) will send the updated capability to: `$mcp-service/capability-change/<service-id>/<service-name>`
+![Capability Update](assets/mcp-capability-change.png)
 
-![Capability Update](assets/mcp-capability-update.png)
+### Resource Update
+The MCP protocol specifies that the client can subscribe to changes of a specific resource. When the resource changes, the MCP server will send a resource update notification.
+
+After the initialization is complete, if the server has resources, the client will use the "resources/list" RPC call to obtain the complete list of resources. If the server provides the capability to subscribe to resources, the client can specify the resource ID to subscribe to changes of that resource. The topic for the client to subscribe to resource changes is: `$mcp-service/resource-update/<service-id>/<resource-id>`.
+
+![Resource Update](assets/mcp-resource-update.png)
 
 ### Operation
 
