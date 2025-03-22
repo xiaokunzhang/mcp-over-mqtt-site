@@ -1,5 +1,5 @@
 # Hugo configuration file
-title: My Site
+title: MCP over MQTT
 
 # import hextra as module
 module:
@@ -36,11 +36,11 @@ menu:
       url: "https://github.com/imfing/hextra-starter-template"
       params:
         icon: github
-    - name: Twitter
+    - name: Community
       weight: 6
-      url: "https://twitter.com/"
+      url: "https://emqx.slack.com/"
       params:
-        icon: x-twitter
+        icon: slack
 
 params:
   navbar:
@@ -54,3 +54,13 @@ params:
   editURL:
     enable: true
     base: "https://github.com/imfing/hextra-starter-template/edit/main/content"
+
+  comments:
+    enable: false
+    type: giscus
+
+    giscus:
+      repo: emqx/mcp-over-mqtt-site
+      repoId: "R_kgDOOMOVMQ"
+      category: "Announcements"
+      categoryId: "DIC_kwDOOMOVMc4CoTsh"

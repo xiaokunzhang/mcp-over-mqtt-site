@@ -1,6 +1,6 @@
 ---
 title: Documentation
-next: first-page
+next: python-sdk
 ---
 
 This is a demo of the theme's documentation layout.
