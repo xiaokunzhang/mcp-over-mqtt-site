@@ -3,16 +3,8 @@ title: Documentation
 next: python-sdk
 ---
 
-This is a demo of the theme's documentation layout.
+Currently only specification documents are available.
 
-## Hello, World!
-
-```go {filename="main.go"}
-package main
-
-import "fmt"
-
-func main() {
-    fmt.Println("Hello, World!")
-}
-```
+{{< cards >}}
+  {{< card link="specification" title="Specification" icon="book-open" >}}
+{{< /cards >}}

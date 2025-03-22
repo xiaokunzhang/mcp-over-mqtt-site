@@ -167,7 +167,7 @@ When subscribing and publishing messages, the MCP client and server **MUST** com
 
 ## MQTT Message Flow
 
-For each MCP client, MCP Server coordinator and MCP Server Worker:
+For each MCP Client, MCP Server Coordinator and MCP Server Worker:
 
 ```mermaid
 sequenceDiagram

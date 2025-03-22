@@ -1,5 +1,5 @@
 ---
-title: Specification (Draft)
+title: Draft
 cascade:
   type: docs
 breadcrumbs: false
