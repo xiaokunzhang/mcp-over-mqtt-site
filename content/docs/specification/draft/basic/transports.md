@@ -32,7 +32,7 @@ MCP uses JSON-RPC to encode messages. JSON-RPC messages **MUST** be UTF-8 encode
 
 - **service-id**: The MQTT Client ID of the MCP Server. Any string except `/`. It must be globally unique and will also be included in the topic.
 
-- **resource-id**: The resource ID identifies a resource that the server is managing. Any string except `/`. It must be unique within the service.
+- **resource-id**: The resource ID identifies a resource that the server is managing. Any non-negative integer. It must be unique within the service.
 
 - **mcp-client-id**: The MQTT Client ID of the client. Any string except `/`. It must be globally unique and will be included in the topic.
 

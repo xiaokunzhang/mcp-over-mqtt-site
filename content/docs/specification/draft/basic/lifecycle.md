@@ -237,9 +237,13 @@ The payload of the capability update notification depends on the specific capabi
 
 ## Resource Update
 
-The MCP protocol specifies that the client can subscribe to changes of a specific resource. When the resource changes, the MCP server will send a resource update notification.
+The MCP protocol specifies that the client can subscribe to changes of a specific resource.
 
-After the initialization is complete, if the server has resources, the client will use the "resources/list" RPC call to obtain the complete list of resources. If the server provides the capability to subscribe to resources, the client can specify the resource ID to subscribe to changes of that resource. The topic for the client to subscribe to resource changes is: `$mcp-service/resource-update/<service-id>/<resource-id>`.
+After the initialization is complete, if the server has resources, the client will use the "resources/list" RPC call to obtain the complete list of resources. If the server provides the capability to subscribe to resources, the client can specify the resource ID to subscribe to changes of that resource.
+
+The topic for the client to subscribe to resource changes is: `$mcp-service/resource-update/<service-id>/<resource-id>`.
+
+When a resource changes, the server coordinator **SHOULD** send a notification to `$mcp-service/resource-update/<service-id>/<resource-id>`, where the `<resource-id>` is the ID of the resource that has changed.
 
 See [resources subscriptions](/docs/specification/draft/server/resources/#subscriptions) for more details.
 
@@ -280,6 +284,10 @@ The server worker **MUST** subscribe to the client's presence channel (`$mcp-cli
 
 The client **MUST** connect with a will message to notify the server when it disconnects unexpectedly, the will topic is `$mcp-client/presence/<mcp-client-id>` and the payload is a "disconnected" notification.
 
+Before the client disconnects, it **MUST** send a "disconnected" notification to the topic `$mcp-client/presence/<mcp-client-id>`.
+
+If a client want to disconnect from a specific server, it **MUST** send a "disconnected" notification to the topic `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`.
+
 When a client disconnects, the server worker **MUST** disconnect and release its resources.
 
 The message format for the client's "disconnected" notification is:
@@ -290,6 +298,39 @@ The message format for the client's "disconnected" notification is:
   "method": "notifications/disconnected"
 }
 ```
+
+## Health Checks
+
+The client or the server worker **MAY** send `ping` requests to the server at any time to check the health of their counterpart.
+
+- If the server worker does not receive a `ping` response from the client within a reasonable time, it **MUST** send a "disconnected" notification to the topic `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` and disconnect itself.
+- If the client does not receive a `ping` response from the server worker within a reasonable time, it **MUST** send a "disconnected" notification to the topic `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`, after that it **MAY** send another initialization request to the coordinator connection to get a new worker connection.
+
+For more information, see the [Ping]({{< ref "/docs/specification/draft/basic/utilities/ping" >}}).
+
+## Timeouts
+All RPC requests are sent asynchronously via MQTT messages, so timeout issues need to be considered. The timeout duration may vary for different RPC requests, but it should be configurable.
+
+Below are the recommended default timeout values for each type of RPC request in this protocol:
+
+- "initialize": 30 seconds
+- "ping": 10 seconds
+- "roots/list": 30 seconds
+- "resources/list": 30 seconds
+- "tools/list": 30 seconds
+- "prompts/list": 30 seconds
+- "prompts/get": 30 seconds
+- "sampling/createMessage": 60 seconds
+- "resources/read": 30 seconds
+- "resources/templates/list": 30 seconds
+- "resources/subscribe": 30 seconds
+- "tools/call": 60 seconds
+- "completion/complete": 60 seconds
+- "logging/setLevel": 30 seconds
+
+{{< callout type="info" >}}
+Progress requests are sent as notifications and do not require a response, so no timeout is needed.
+{{< /callout >}}
 
 ## Error Handling
 
