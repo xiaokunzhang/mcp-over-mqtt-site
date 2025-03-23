@@ -2,6 +2,8 @@
 title: Transports
 type: docs
 weight: 10
+prev: docs/specification/draft/basic/
+next: docs/specification/draft/basic/messages
 ---
 
 {{< callout type="info" >}}

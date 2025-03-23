@@ -3,6 +3,8 @@ title: Base Protocol
 cascade:
   type: docs
 weight: 2
+prev: docs/specification/draft/architecture/
+next: docs/specification/draft/basic/transports
 ---
 
 {{< callout type="info" >}}

@@ -3,7 +3,7 @@ title: Architecture
 type: docs
 weight: 1
 prev: docs/specification/
-next: docs/specification/basic
+next: docs/specification/draft/basic/
 ---
 {{< callout type="info" >}}
 This page is modified from [MCP-Architecture](https://spec.modelcontextprotocol.io/specification/draft/architecture/) for the MQTT transport layer, modifications include:
@@ -21,6 +21,8 @@ isolating concerns. Built on JSON-RPC, MCP provides a stateful session protocol 
 on context exchange and sampling coordination between clients and servers.
 
 ## Core Components
+
+MCP over MQTT introduces a centralized MQTT broker, while other components remain unchanged. Additionally, an MCP Client can communicate with multiple MCP Servers through a shared MQTT connection.
 
 ```mermaid
 graph LR
