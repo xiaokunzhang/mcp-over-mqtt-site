@@ -45,9 +45,9 @@ sequenceDiagram
 
 ### Service Registration
 
-After the MCP server starts, it registers its service with the MQTT broker. The channel (MQTT topic) for service discovery and registration is: `$mcp-service/presence/<service-id>/<service-name>`.
+After the MCP server starts, it registers its service with the MQTT broker. The presence channel (MQTT topic) for service discovery and registration is: `$mcp-service/presence/<service-id>/<service-name>`.
 
-Coordinator connections of the MCP server **MUST** publish a "service-online" notification to the service discovery channel when they start, with the retained flag set to `True`.
+Coordinator connections of the MCP server **MUST** publish a "service-online" notification to the service presence channel when they start, with the **RETAIN** flag set to `True`.
 
 The "service-online" notification **SHOULD** provide only limited information about the service to avoid excessive message size:
 
@@ -69,7 +69,7 @@ More detailed information, such as parameter details of the tools, **SHOULD** on
 
 The client can subscribe to the `$mcp-service/presence/+/<service-name-filter>` topic at any time, where `<service-name-filter>` is a filter for the service name.
 
-For example, if the service name is `<service-type>/<sub-type>/<name>`, and the client determines through its permissions that it can only access services of type `<service-type>/<sub-type>`, it can subscribe to `$mcp-service/presence/+/<service-type>/<sub-type>/#`, thereby subscribing to the service discovery channel for all services of the `<sub-type>` type at once.
+For example, if the service name is `<service-type>/<sub-type>/<name>`, and the client determines through its permissions that it can only access services of type `<service-type>/<sub-type>`, it can subscribe to `$mcp-service/presence/+/<service-type>/<sub-type>/#`, thereby subscribing to the service presence channel for all services of the `<sub-type>` type at once.
 
 Although the client can subscribe to `$mcp-service/presence/+/#` to get all types of services, the administrator might restrict it through ACL (Access Control List) on the MQTT broker to only send and receive messages on RPC channels like `$mcp-rpc-endpoint/<mcp-client-id>/<service-type>/<sub-type>/#`. Therefore, subscribing to overly broad topics is not useful. By designing the `<service-name-filter>` appropriately, the client can reduce interference from irrelevant information.
 
@@ -79,7 +79,12 @@ Before disconnecting, the coordinator needs to send an empty payload message to 
 
 When connecting to the MQTT broker, the coordinator must set `$mcp-service/presence/<service-id>/<service-name>` as the will topic, with an empty payload will message, to clear the registration information in case of an unexpected disconnection.
 
-On the `$mcp-service/presence/<service-id>/<service-name>` topic, when the client receives a `service-online` notification, it should record the `<service-id>` as one of the instances of that `<service-name>`. When the client receives an empty payload message, it should clear the cached `<service-id>`. As long as any instance of that `<service-name>` is online, the client should consider the service to be online.
+On the `$mcp-service/presence/<service-id>/<service-name>` topic:
+
+- When the client receives a `service-online` notification, it should record the `<service-id>` as one of the instances of that `<service-name>`.
+- When the client receives an empty payload message, it should clear the cached `<service-id>`. As long as any instance of that `<service-name>` is online, the client should consider the service to be online.
+
+After a server coordinator disconnects, the client **SHOULD NOT** reinitialize the connection as long as the server worker is still online.
 
 ![Service Discovery](assets/mcp-service-discovery.png)
 
@@ -97,7 +102,11 @@ When a client initialize the connection, the server **MUST** assign a worker con
 If the coordinator does not support the requested protocol version, it **MUST** respond with an
 error indicating the supported version(s) on the RPC channel.
 
-If the coordinator supports the requested protocol version, it assigns a worker connection to the client and responds with its own capabilities and information, on the RPC channel. If no worker connection is available, the coordinator creates a new worker connection. If for some reason no worker connection can be used, the coordinator **MUST** respond with an error indicating the reason.
+If the coordinator accepts the initialization, it assigns a worker connection to the client and responds with its own capabilities and information, on the RPC channel. If no worker connection is available, the coordinator creates a new worker connection. If for some reason no worker connection can be used, the coordinator **MUST** respond with an error indicating the reason.
+
+The client **MUST** subscribe to the RPC channel (`$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`) before sending the initialization request, with the **No Local** subscription option.
+
+The worker **MUST** subscribe to the RPC channel (`$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`) before responding to the initialization request, with the **No Local** subscription option.
 
 ![mcp-initialize](assets/mcp-initialize-msg-flow.png)
 
@@ -211,24 +220,28 @@ Capability objects can describe sub-capabilities like:
 
 ## Capability Update
 
-Before initiating the Initialize request, the MCP Client must subscribe to the MCP Server's capability update topic: `$mcp-service/capability-change/+/<service-name-filter>`, where `<service-name-filter>` is a filter for the service name.
+Before initiating the Initialize request, the MCP client **MUST** subscribe to the MCP server's capability update topic: `$mcp-service/capability-change/+/<service-name-filter>`, where `<service-name-filter>` is a filter for the service name.
 
 For example, during the service discovery phase, if a service named `<service-type>/<sub-type>/<name>` is available, the client can subscribe to `$mcp-service/capability-change/+/<service-type>/<sub-type>/#`, thereby subscribing to the capability update channel for all services of the `<sub-type>` type at once.
 
-The MCP Server Worker first subscribes to the client's capability update channel: `$mcp-client/capability-change/<mcp-client-id>`. Then it sends the initialize response message and carries the server's complete capability information.
+Before the MCP server responds to the initialization request, it **MUST** first subscribe to the MCP client's capability update topic: `$mcp-client/capability-change/<mcp-client-id>`.
 
 If there are subsequent capability list updates:
 
-- The client sends a notification to: `$mcp-client/capability-change/<mcp-client-id>`
-
 - The server (coordinator) will send a notification to: `$mcp-service/capability-change/<service-id>/<service-name>`
+- The client will send a notification to: `$mcp-client/capability-change/<mcp-client-id>`
+
+The payload of the capability update notification depends on the specific capability that has changed. For example "notifications/tools/list_changed" for tools. After receiving a capability list change notification, the client or server needs to retrieve the updated capability list. See the specific capability documentation for details.
 
 ![Capability Update](assets/mcp-capability-change.png)
 
 ## Resource Update
+
 The MCP protocol specifies that the client can subscribe to changes of a specific resource. When the resource changes, the MCP server will send a resource update notification.
 
 After the initialization is complete, if the server has resources, the client will use the "resources/list" RPC call to obtain the complete list of resources. If the server provides the capability to subscribe to resources, the client can specify the resource ID to subscribe to changes of that resource. The topic for the client to subscribe to resource changes is: `$mcp-service/resource-update/<service-id>/<resource-id>`.
+
+See [resources subscriptions](/docs/specification/draft/server/resources/#subscriptions) for more details.
 
 ![Resource Update](assets/mcp-resource-update.png)
 
@@ -244,15 +257,32 @@ Both parties **SHOULD**:
 
 ## Shutdown
 
-The worker **MUST** connect with a will message to notify the client when it disconnects unexpectedly.
+### Server Worker Disconnect
 
-When a client disconnects, the server worker **MUST** disconnect and its resources.
+The server worker **MUST** connect with a will message to notify the client when it disconnects unexpectedly, the will topic is `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` and the payload is a "disconnected" notification.
 
-Before a worker connection disconnects, the worker **MUST** send a "disconnected" notification to the client it serves.
+Before a worker connection disconnects, the worker **MUST** send a "disconnected" notification to the topic `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`.
 
-When the client receives the disconnection notification, it **MAY** send another initialization request to the coordinator connection to get a new worker connection.
+The message format for the server worker's "disconnected" notification is:
 
-The message format for the "disconnected" notification is:
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/disconnected"
+}
+```
+
+When the client receives the "disconnected" notification, it **MAY** send another initialization request to the coordinator connection to get a new worker connection.
+
+### Client Disconnect
+
+The server worker **MUST** subscribe to the client's presence channel (`$mcp-client/presence/<mcp-client-id>`) before sending the initialization response.
+
+The client **MUST** connect with a will message to notify the server when it disconnects unexpectedly, the will topic is `$mcp-client/presence/<mcp-client-id>` and the payload is a "disconnected" notification.
+
+When a client disconnects, the server worker **MUST** disconnect and release its resources.
+
+The message format for the client's "disconnected" notification is:
 
 ```json
 {

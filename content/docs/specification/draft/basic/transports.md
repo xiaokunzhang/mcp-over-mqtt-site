@@ -84,11 +84,12 @@ MCP over MQTT transmits messages through MQTT topics, where each MQTT topic is r
 
 | Channel Name                    | Topic Name                                            | Description |
 |---------------------------------|-------------------------------------------------------|-------------|
-| Server Control Channel          | `$mcp-service/<service-name>`                         | Used for sending and receiving initialization messages and other control messages. |
-| Server Capability Change Channel| `$mcp-service/capability-change/<service-id>/<service-name>` | Used for sending and receiving server capability list changed notification. |
-| Server Resource Update Channel| `$mcp-service/resource-update/<service-id>/<resource-id>` | Used for sending and receiving server resource updated notification. |
-| Service Discovery Channel       | `$mcp-service/presence/<service-id>/<service-name>`   | Used for sending and receiving server online/offline status messages. |
-| Client Capability Change Channel| `$mcp-client/capability-change/<mcp-client-id>`       | Used for sending and receiving client capability list changed notification. |
+| Server's Control Channel          | `$mcp-service/<service-name>`                         | Used for sending and receiving initialization messages and other control messages. |
+| Server's Capability Change Channel| `$mcp-service/capability-change/<service-id>/<service-name>` | Used for sending and receiving server capability list changed notification. |
+| Server Resource Update Channel | `$mcp-service/resource-update/<service-id>/<resource-id>` | Used for sending and receiving server resource updated notification. |
+| Server's Presence Channel | `$mcp-service/presence/<service-id>/<service-name>`   | Used for sending and receiving server online/offline status messages. |
+| Client's Presence Channel | `$mcp-client/presence/<mcp-client-id>`   | Used for sending and receiving server online/offline status messages. |
+| Client's Capability Change Channel| `$mcp-client/capability-change/<mcp-client-id>`       | Used for sending and receiving client capability list changed notification. |
 | RPC Channel                     | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`    | Used for sending and receiving RPC requests, RPC responses, and notification messages. |
 
 ## MQTT Version
@@ -121,14 +122,14 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 |-------------------|----------------------------------------------------|-------------|
 | Server Coordinator | `$share/any/$mcp-service/<service-name>`          | The control channel of the MCP server to receive control plane messages. We use shared subscription to force a message only goes to exactly one coordinator. |
 | Server Worker | `$mcp-client/capability-change/<mcp-client-id>`   | The client’s capability change channel to receive capability list changed notification of the clients. |
-| Server Worker      | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` <br> - Set `no local` flag | The RPC channel to receive RPC requests, RPC responses, and notifications from a client. |
+| Server Worker      | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` <br> - Set `No Local` option | The RPC channel to receive RPC requests, RPC responses, and notifications from a client. |
 
 ### Topics that MCP Server Publishes to
 
 | Publisher          | Topic Name                                            | Messages |
 |-------------------|------------------------------------------------------|----------|
 | Server Coordinator | `$mcp-service/capability-change/<service-id>/<service-name>` | capability changed notification.|
-| Server Coordinator | `$mcp-service/presence/<service-id>/<service-name>` <br> - Retain Flag: true <br> - Also set as a will topic with empty payload to clear the retain message when offline | Presence messages for the MCP Server. <br> See [ServiceDiscovery](/docs/specification/draft/basic/lifecycle#service-discovery) for more details |
+| Server Coordinator | `$mcp-service/presence/<service-id>/<service-name>` <br> - RETAIN Flag: true <br> - Also set as a will topic with empty payload to clear the retain message when offline | Presence messages for the MCP Server. <br> See [ServiceDiscovery](/docs/specification/draft/basic/lifecycle#service-discovery) for more details |
 | Server Coordinator | `$mcp-service/resource-update/<service-id>/<resource-id>` | Resource update notification.|
 | Server Worker      | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` <br> - Set as a will topic with the payload to the `disconnected` notification | RPC requests, responses and notifications. |
 
@@ -137,8 +138,8 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 |------------|------------------------------------------------------|-------------|
 | Client     | `$mcp-service/capability-change/+/<service-name-filter>` | The capability change channel to receive capability list changed notification of the service. |
 | Client     | `$mcp-service/resource-update/+/<resource-id>` | The resource update channel to receive resource update notification of the service. |
-| Client     | `$mcp-service/presence/+/<service-name-filter>`      | The service discovery channel to receive the presence message of the service. |
-| Client     | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name-filter>` <br> - Set `no local` flag | The RPC channel to receive PRC requests, responses and notifications sent by the MCP server. |
+| Client     | `$mcp-service/presence/+/<service-name-filter>`      | The service presence channel to receive the presence message of the service. |
+| Client     | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name-filter>` <br> - Set `No Local` option | The RPC channel to receive PRC requests, responses and notifications sent by the MCP server. |
 
 ### Topics that MCP Client Publishes to
 
