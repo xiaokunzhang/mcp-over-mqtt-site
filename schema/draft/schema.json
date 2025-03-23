@@ -60,8 +60,8 @@
                     "type": "string"
                 },
                 "resourceId": {
-                    "type": "integer",
-                    "description": "A unique identifier for this request, used to correlate it with the response."
+                    "description": "A unique identifier for this resource.",
+                    "type": "integer"
                 },
                 "uri": {
                     "description": "The URI of this resource.",
@@ -139,61 +139,6 @@
             },
             "required": [
                 "content"
-            ],
-            "type": "object"
-        },
-        "ServiceOnlineNotification": {
-            "description": "A notification from the server to the client, informing it that the server is online and ready to accept requests.",
-            "properties": {
-                "method": {
-                    "const": "notifications/service/online",
-                    "type": "string"
-                },
-                "params": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "description": {
-                            "description": "A human-readable description of the service.",
-                            "type": "string"
-                        },
-                        "metadata": {
-                            "additionalProperties": true,
-                            "description": "This can be used by clients to know more about the service. E.g., the permissions required to use the service.",
-                            "properties": {},
-                            "type": "object"
-                        }
-                    },
-                    "required": [
-                        "description"
-                    ],
-                    "type": "object"
-                }
-            },
-            "required": [
-                "method", "params"
-            ],
-            "type": "object"
-        },
-        "DisconnectedNotification": {
-            "description": "A notification from the server to the client, informing it that the server is disconnecting.",
-            "properties": {
-                "method": {
-                    "const": "notifications/disconnected",
-                    "type": "string"
-                },
-                "params": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "reason": {
-                            "description": "An optional string describing the reason for the disconnection. This MAY be logged or presented to the user.",
-                            "type": "string"
-                        }
-                    },
-                    "type": "object"
-                }
-            },
-            "required": [
-                "method"
             ],
             "type": "object"
         },
@@ -523,6 +468,28 @@
         "Cursor": {
             "description": "An opaque token used to represent a cursor for pagination.",
             "type": "string"
+        },
+        "DisconnectedNotification": {
+            "description": "A notification from the server to the client or vice versa, informing it that the connection is being closed.",
+            "properties": {
+                "method": {
+                    "const": "notifications/disconnected",
+                    "type": "string"
+                },
+                "params": {
+                    "properties": {
+                        "reason": {
+                            "description": "A human-readable description of why the connection is being closed.",
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "required": [
+                "method"
+            ],
+            "type": "object"
         },
         "EmbeddedResource": {
             "description": "The contents of a resource, embedded into a prompt or tool call result.\n\nIt is up to the client how best to render embedded resources for the benefit\nof the LLM and/or the user.",
@@ -1460,8 +1427,8 @@
                 "params": {
                     "properties": {
                         "resourceId": {
-                            "type": "integer",
-                            "description": "A unique identifier for this request, used to correlate it with the response."
+                            "description": "A unique identifier for this resource.",
+                            "type": "integer"
                         },
                         "uri": {
                             "description": "The URI of the resource to read. The URI can use any protocol; it is up to the server how to interpret it.",
@@ -1470,7 +1437,8 @@
                         }
                     },
                     "required": [
-                        "resourceId", "uri"
+                        "resourceId",
+                        "uri"
                     ],
                     "type": "object"
                 }
@@ -1561,8 +1529,8 @@
                     "type": "string"
                 },
                 "resourceId": {
-                    "type": "integer",
-                    "description": "A unique identifier for this request, used to correlate it with the response."
+                    "description": "A unique identifier for this resource.",
+                    "type": "integer"
                 },
                 "uri": {
                     "description": "The URI of this resource.",
@@ -1585,8 +1553,8 @@
                     "type": "string"
                 },
                 "resourceId": {
-                    "type": "integer",
-                    "description": "A unique identifier for this request, used to correlate it with the response."
+                    "description": "A unique identifier for this resource.",
+                    "type": "integer"
                 },
                 "uri": {
                     "description": "The URI of this resource.",
@@ -1595,7 +1563,8 @@
                 }
             },
             "required": [
-                "uri", "resourceId"
+                "resourceId",
+                "uri"
             ],
             "type": "object"
         },
@@ -1683,8 +1652,8 @@
                 "params": {
                     "properties": {
                         "resourceId": {
-                            "type": "integer",
-                            "description": "A unique identifier for this request, used to correlate it with the response."
+                            "description": "A unique identifier for this resource.",
+                            "type": "integer"
                         },
                         "uri": {
                             "description": "The URI of the resource that has been updated. This might be a sub-resource of the one that the client actually subscribed to.",
@@ -1693,7 +1662,8 @@
                         }
                     },
                     "required": [
-                        "uri", "resourceId"
+                        "resourceId",
+                        "uri"
                     ],
                     "type": "object"
                 }
@@ -1921,6 +1891,38 @@
                 }
             ]
         },
+        "ServiceOnlineNotification": {
+            "description": "A notification from the server to the client, informing it that the server is online and ready to accept requests.",
+            "properties": {
+                "method": {
+                    "const": "notifications/service/online",
+                    "type": "string"
+                },
+                "params": {
+                    "properties": {
+                        "description": {
+                            "description": "A description of what this service is.\n\nThis can be used by clients to improve the LLM's understanding of available services. It can be thought of like a \"hint\" to the model.",
+                            "type": "string"
+                        },
+                        "metadata": {
+                            "additionalProperties": true,
+                            "description": "The metadata for this service.\n\nThis can be used by clients to know more about the service. E.g., the permissions required to use the service.",
+                            "properties": {},
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "description"
+                    ],
+                    "type": "object"
+                }
+            },
+            "required": [
+                "method",
+                "params"
+            ],
+            "type": "object"
+        },
         "SetLevelRequest": {
             "description": "A request from the client to the server, to enable or adjust logging.",
             "properties": {
@@ -1957,8 +1959,8 @@
                 "params": {
                     "properties": {
                         "resourceId": {
-                            "type": "integer",
-                            "description": "A unique identifier for this request, used to correlate it with the response."
+                            "description": "A unique identifier for this resource.",
+                            "type": "integer"
                         },
                         "uri": {
                             "description": "The URI of the resource to subscribe to. The URI can use any protocol; it is up to the server how to interpret it.",
@@ -1967,7 +1969,8 @@
                         }
                     },
                     "required": [
-                        "uri", "resourceId"
+                        "resourceId",
+                        "uri"
                     ],
                     "type": "object"
                 }
@@ -2006,13 +2009,13 @@
                     "description": "The MIME type of this resource, if known.",
                     "type": "string"
                 },
+                "resourceId": {
+                    "description": "A unique identifier for this resource.",
+                    "type": "integer"
+                },
                 "text": {
                     "description": "The text of the item. This must only be set if the item can actually be represented as text (not binary data).",
                     "type": "string"
-                },
-                "resourceId": {
-                    "type": "integer",
-                    "description": "A unique identifier for this request, used to correlate it with the response."
                 },
                 "uri": {
                     "description": "The URI of this resource.",
@@ -2021,8 +2024,8 @@
                 }
             },
             "required": [
-                "text",
                 "resourceId",
+                "text",
                 "uri"
             ],
             "type": "object"
@@ -2106,8 +2109,8 @@
                 "params": {
                     "properties": {
                         "resourceId": {
-                            "type": "integer",
-                            "description": "A unique identifier for this request, used to correlate it with the response."
+                            "description": "A unique identifier for this resource.",
+                            "type": "integer"
                         },
                         "uri": {
                             "description": "The URI of the resource to unsubscribe from.",
@@ -2116,7 +2119,8 @@
                         }
                     },
                     "required": [
-                        "uri", "resourceId"
+                        "resourceId",
+                        "uri"
                     ],
                     "type": "object"
                 }
