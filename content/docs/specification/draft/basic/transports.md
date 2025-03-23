@@ -128,29 +128,9 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 | Publisher          | Topic Name                                            | Messages |
 |-------------------|------------------------------------------------------|----------|
 | Server Coordinator | `$mcp-service/capability-change/<service-id>/<service-name>` | capability changed notification.|
-| Server Coordinator | `$mcp-service/presence/<service-id>/<service-name>` <br> - Retain Flag: true <br> - Also set as a will topic with empty payload to clear the retain message when offline | Presence messages for the MCP Server. <br> See the details below this table. |
+| Server Coordinator | `$mcp-service/presence/<service-id>/<service-name>` <br> - Retain Flag: true <br> - Also set as a will topic with empty payload to clear the retain message when offline | Presence messages for the MCP Server. <br> See [ServiceDiscovery](/docs/specification/draft/basic/lifecycle#service-discovery) for more details |
 | Server Coordinator | `$mcp-service/resource-update/<service-id>/<resource-id>` | Resource update notification.|
 | Server Worker      | `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` <br> - Set as a will topic with the payload to the `disconnected` notification | RPC requests, responses and notifications. |
-
-**Details:**
-
-The presence message **SHOULD** provide only limited information about the service to avoid excessive message size:
-
-- A brief description of the service's functionality to help clients determine which services they need to call.
-- Some metadata, such as hints about the permissions required to access this service, to help clients quickly assess whether they have access.
-
-More detailed information, such as parameter details of the tools, **SHOULD** be included in the capability message instead when the client initializes the service:
-
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "notifications/service-online",
-  "params": {
-      "description": "This is a brief description about the functionalities provided by this service to allow clients to choose as needed. If tools are provided, it explains which tools are available but does not include tool parameters to reduce message size.",
-      "metadata": {}
-  }
-}
-```
 
 ### Topics that MCP Client Subscribes to
 | Subscriber | Topic Filter                                         | Explanation |

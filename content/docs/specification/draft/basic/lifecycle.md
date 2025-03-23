@@ -41,23 +41,49 @@ sequenceDiagram
     Note over Client,Server: Connection closed
 ```
 
-## Lifecycle Phases
+## Service Discovery
 
-### Service Discovery
+### Service Registration
 
-After the MCP server starts, it registers its service with the MQTT Broker. The channel (MQTT topic) for service discovery and registry is: `$mcp-service/presence/<service-id>/<service-name>`.
+After the MCP server starts, it registers its service with the MQTT broker. The channel (MQTT topic) for service discovery and registration is: `$mcp-service/presence/<service-id>/<service-name>`.
 
-The message payload **SHOULD** briefly describe the functionalities provided by the service. To reduce the message size, it **SHOULD NOT** include overly detailed information such as tool parameters. This topic **MUST** have the Retained Flag set to True, and in the CONNECT message, it **MUST** also be set as the Last Will Msg with an empty payload.
+Coordinator connections of the MCP server **MUST** publish a "service-online" notification to the service discovery channel when they start, with the retained flag set to `True`.
+
+The "service-online" notification **SHOULD** provide only limited information about the service to avoid excessive message size:
+
+- A brief description of the service's functionality to help clients determine which services they need to call.
+- Some metadata, such as hints about the permissions required to access this service, to help clients quickly assess whether they have access.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/service-online",
+  "params": {
+      "description": "This is a brief description about the functionalities provided by this service to allow clients to choose as needed. If tools are provided, it explains which tools are available but does not include tool parameters to reduce message size.",
+      "metadata": {}
+  }
+}
+```
+
+More detailed information, such as parameter details of the tools, **SHOULD** only be included in the capability message when the client initializes the service.
 
 The client can subscribe to the `$mcp-service/presence/+/<service-name-filter>` topic at any time, where `<service-name-filter>` is a filter for the service name.
 
 For example, if the service name is `<service-type>/<sub-type>/<name>`, and the client determines through its permissions that it can only access services of type `<service-type>/<sub-type>`, it can subscribe to `$mcp-service/presence/+/<service-type>/<sub-type>/#`, thereby subscribing to the service discovery channel for all services of the `<sub-type>` type at once.
 
-Although the client can subscribe to `$mcp-service/presence/+/#` to get all types of services, the administrator might restrict it through ACL (Access Control List) on the MQTT Broker to only send and receive messages on RPC channels like `$mcp-rpc-endpoint/<mcp-client-id>/<service-type>/<sub-type>/#`. Therefore, subscribing to overly broad topics is not useful. By designing the `<service-name-filter>` appropriately, the client can reduce interference from irrelevant information.
+Although the client can subscribe to `$mcp-service/presence/+/#` to get all types of services, the administrator might restrict it through ACL (Access Control List) on the MQTT broker to only send and receive messages on RPC channels like `$mcp-rpc-endpoint/<mcp-client-id>/<service-type>/<sub-type>/#`. Therefore, subscribing to overly broad topics is not useful. By designing the `<service-name-filter>` appropriately, the client can reduce interference from irrelevant information.
+
+### Service Unregistration
+
+Before disconnecting, the coordinator needs to send an empty payload message to the `$mcp-service/presence/<service-id>/<service-name>` topic to clear the registration information.
+
+When connecting to the MQTT broker, the coordinator must set `$mcp-service/presence/<service-id>/<service-name>` as the will topic, with an empty payload will message, to clear the registration information in case of an unexpected disconnection.
+
+On the `$mcp-service/presence/<service-id>/<service-name>` topic, when the client receives a `service-online` notification, it should record the `<service-id>` as one of the instances of that `<service-name>`. When the client receives an empty payload message, it should clear the cached `<service-id>`. As long as any instance of that `<service-name>` is online, the client should consider the service to be online.
 
 ![Service Discovery](assets/mcp-service-discovery.png)
 
-### Initialization
+## Initialization
 
 The initialization phase **MUST** be the first interaction between client and server.
 During this phase, the client and server:
@@ -147,7 +173,7 @@ After successful initialization, the client MUST send an initialized notificatio
   [logging]({{< ref "/docs/specification/draft/server/utilities/logging" >}}) before receiving
   the `initialized` notification.
 
-#### Version Negotiation
+### Version Negotiation
 
 In the `initialize` request, the client **MUST** send a protocol version it supports.
 This **SHOULD** be the _latest_ version supported by the client.
@@ -159,7 +185,7 @@ supports. This **SHOULD** be the _latest_ version supported by the server.
 If the client does not support the version in the server's response, it **SHOULD**
 disconnect.
 
-#### Capability Negotiation
+### Capability Negotiation
 
 Client and server capabilities establish which optional protocol features will be
 available during the session.
@@ -183,7 +209,7 @@ Capability objects can describe sub-capabilities like:
   tools)
 - `subscribe`: Support for subscribing to individual items' changes (resources only)
 
-### Capability Update
+## Capability Update
 
 Before initiating the Initialize request, the MCP Client must subscribe to the MCP Server's capability update topic: `$mcp-service/capability-change/+/<service-name-filter>`, where `<service-name-filter>` is a filter for the service name.
 
@@ -199,14 +225,14 @@ If there are subsequent capability list updates:
 
 ![Capability Update](assets/mcp-capability-change.png)
 
-### Resource Update
+## Resource Update
 The MCP protocol specifies that the client can subscribe to changes of a specific resource. When the resource changes, the MCP server will send a resource update notification.
 
 After the initialization is complete, if the server has resources, the client will use the "resources/list" RPC call to obtain the complete list of resources. If the server provides the capability to subscribe to resources, the client can specify the resource ID to subscribe to changes of that resource. The topic for the client to subscribe to resource changes is: `$mcp-service/resource-update/<service-id>/<resource-id>`.
 
 ![Resource Update](assets/mcp-resource-update.png)
 
-### Operation
+## Operation
 
 During the operation phase, the client and server exchange messages according to the
 negotiated capabilities.
@@ -216,7 +242,7 @@ Both parties **SHOULD**:
 - Respect the negotiated protocol version
 - Only use capabilities that were successfully negotiated
 
-### Shutdown
+## Shutdown
 
 The worker **MUST** connect with a will message to notify the client when it disconnects unexpectedly.
 
