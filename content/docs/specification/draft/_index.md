@@ -18,7 +18,7 @@ they need.
 
 This specification defines the authoritative protocol requirements, based on the
 TypeScript schema in
-[schema.ts](https://github.com/modelcontextprotocol/specification/blob/main/schema/draft/schema.ts).
+[schema.ts](https://github.com/emqx/mcp-over-mqtt-site/blob/main/schema/draft/schema.ts).
 
 For implementation guides and examples, visit
 [modelcontextprotocol.io](https://modelcontextprotocol.io).

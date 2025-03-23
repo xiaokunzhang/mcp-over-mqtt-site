@@ -47,9 +47,9 @@ sequenceDiagram
 
 After the MCP server starts, it registers its service with the MQTT broker. The presence channel (MQTT topic) for service discovery and registration is: `$mcp-service/presence/<service-id>/<service-name>`.
 
-Coordinator connections of the MCP server **MUST** publish a "service-online" notification to the service presence channel when they start, with the **RETAIN** flag set to `True`.
+Coordinator connections of the MCP server **MUST** publish a "service/online" notification to the service presence channel when they start, with the **RETAIN** flag set to `True`.
 
-The "service-online" notification **SHOULD** provide only limited information about the service to avoid excessive message size:
+The "service/online" notification **SHOULD** provide only limited information about the service to avoid excessive message size:
 
 - A brief description of the service's functionality to help clients determine which services they need to call.
 - Some metadata, such as hints about the permissions required to access this service, to help clients quickly assess whether they have access.
@@ -57,7 +57,7 @@ The "service-online" notification **SHOULD** provide only limited information ab
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "notifications/service-online",
+  "method": "notifications/service/online",
   "params": {
       "description": "This is a brief description about the functionalities provided by this service to allow clients to choose as needed. If tools are provided, it explains which tools are available but does not include tool parameters to reduce message size.",
       "metadata": {}
@@ -81,7 +81,7 @@ When connecting to the MQTT broker, the coordinator must set `$mcp-service/prese
 
 On the `$mcp-service/presence/<service-id>/<service-name>` topic:
 
-- When the client receives a `service-online` notification, it should record the `<service-id>` as one of the instances of that `<service-name>`.
+- When the client receives a `service/online` notification, it should record the `<service-id>` as one of the instances of that `<service-name>`.
 - When the client receives an empty payload message, it should clear the cached `<service-id>`. As long as any instance of that `<service-name>` is online, the client should consider the service to be online.
 
 After a server coordinator disconnects, the client **SHOULD NOT** reinitialize the connection as long as the server worker is still online.

@@ -142,6 +142,61 @@
             ],
             "type": "object"
         },
+        "ServiceOnlineNotification": {
+            "description": "A notification from the server to the client, informing it that the server is online and ready to accept requests.",
+            "properties": {
+                "method": {
+                    "const": "notifications/service/online",
+                    "type": "string"
+                },
+                "params": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "description": {
+                            "description": "A human-readable description of the service.",
+                            "type": "string"
+                        },
+                        "metadata": {
+                            "additionalProperties": true,
+                            "description": "This can be used by clients to know more about the service. E.g., the permissions required to use the service.",
+                            "properties": {},
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "description"
+                    ],
+                    "type": "object"
+                }
+            },
+            "required": [
+                "method", "params"
+            ],
+            "type": "object"
+        },
+        "DisconnectedNotification": {
+            "description": "A notification from the server to the client, informing it that the server is disconnecting.",
+            "properties": {
+                "method": {
+                    "const": "notifications/disconnected",
+                    "type": "string"
+                },
+                "params": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "reason": {
+                            "description": "An optional string describing the reason for the disconnection. This MAY be logged or presented to the user.",
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "required": [
+                "method"
+            ],
+            "type": "object"
+        },
         "CancelledNotification": {
             "description": "This notification can be sent by either side to indicate that it is cancelling a previously-issued request.\n\nThe request SHOULD still be in-flight, but due to communication latency, it is always possible that this notification MAY arrive after the request has already finished.\n\nThis notification indicates that the result will be unused, so any associated processing SHOULD cease.\n\nA client MUST NOT attempt to cancel its `initialize` request.",
             "properties": {
@@ -1793,6 +1848,12 @@
         },
         "ServerNotification": {
             "anyOf": [
+                {
+                    "$ref": "#/definitions/ServiceOnlineNotification"
+                },
+                {
+                    "$ref": "#/definitions/DisconnectedNotification"
+                },
                 {
                     "$ref": "#/definitions/CancelledNotification"
                 },

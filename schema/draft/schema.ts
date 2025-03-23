@@ -114,6 +114,43 @@ export interface JSONRPCError {
  */
 export type EmptyResult = Result;
 
+/* Service online */
+/**
+ * A notification from the server to the client, informing it that the server is online and ready to accept requests.
+ */
+export interface ServiceOnlineNotification extends Notification {
+  method: "notifications/service/online";
+  params: {
+    /**
+     * A description of what this service is.
+     *
+     * This can be used by clients to improve the LLM's understanding of available services. It can be thought of like a "hint" to the model.
+     */
+    description: string;
+
+    /**
+     * The metadata for this service.
+     *
+     * This can be used by clients to know more about the service. E.g., the permissions required to use the service.
+     */
+    metadata?: object;
+  };
+}
+
+/* Disconnected */
+/**
+ * A notification from the server to the client or vice versa, informing it that the connection is being closed.
+ */
+export interface DisconnectedNotification extends Notification {
+  method: "notifications/disconnected";
+  params?: {
+    /**
+     * A human-readable description of why the connection is being closed.
+     */
+    reason?: string;
+  };
+}
+
 /* Cancellation */
 /**
  * This notification can be sent by either side to indicate that it is cancelling a previously-issued request.
@@ -1180,6 +1217,8 @@ export type ServerRequest =
   | ListRootsRequest;
 
 export type ServerNotification =
+  | ServiceOnlineNotification
+  | DisconnectedNotification
   | CancelledNotification
   | ProgressNotification
   | LoggingMessageNotification
