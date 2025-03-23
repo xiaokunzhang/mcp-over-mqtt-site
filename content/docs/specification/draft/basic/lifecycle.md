@@ -309,6 +309,7 @@ The client or the server worker **MAY** send `ping` requests to the server at an
 For more information, see the [Ping]({{< ref "/docs/specification/draft/basic/utilities/ping" >}}).
 
 ## Timeouts
+
 All RPC requests are sent asynchronously via MQTT messages, so timeout issues need to be considered. The timeout duration may vary for different RPC requests, but it should be configurable.
 
 Below are the recommended default timeout values for each type of RPC request in this protocol:
