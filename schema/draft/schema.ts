@@ -351,6 +351,11 @@ export interface ReadResourceRequest extends Request {
   method: "resources/read";
   params: {
     /**
+     * A unique identifier for this resource.
+     */
+    resourceId: number;
+
+    /**
      * The URI of the resource to read. The URI can use any protocol; it is up to the server how to interpret it.
      *
      * @format uri
@@ -380,6 +385,11 @@ export interface SubscribeRequest extends Request {
   method: "resources/subscribe";
   params: {
     /**
+     * A unique identifier for this resource.
+     */
+    resourceId: number;
+
+    /**
      * The URI of the resource to subscribe to. The URI can use any protocol; it is up to the server how to interpret it.
      *
      * @format uri
@@ -394,6 +404,11 @@ export interface SubscribeRequest extends Request {
 export interface UnsubscribeRequest extends Request {
   method: "resources/unsubscribe";
   params: {
+    /**
+     * A unique identifier for this resource.
+     */
+    resourceId: number;
+
     /**
      * The URI of the resource to unsubscribe from.
      *
@@ -410,6 +425,11 @@ export interface ResourceUpdatedNotification extends Notification {
   method: "notifications/resources/updated";
   params: {
     /**
+     * A unique identifier for this resource.
+     */
+    resourceId: number;
+
+    /**
      * The URI of the resource that has been updated. This might be a sub-resource of the one that the client actually subscribed to.
      *
      * @format uri
@@ -422,6 +442,12 @@ export interface ResourceUpdatedNotification extends Notification {
  * A known resource that the server is capable of reading.
  */
 export interface Resource {
+
+  /**
+   * A unique identifier for this resource.
+   */
+  resourceId: number;
+
   /**
    * The URI of this resource.
    *
@@ -494,6 +520,11 @@ export interface ResourceTemplate {
  * The contents of a specific resource or sub-resource.
  */
 export interface ResourceContents {
+  /**
+   * A unique identifier for this resource.
+   */
+  resourceId: number;
+
   /**
    * The URI of this resource.
    *

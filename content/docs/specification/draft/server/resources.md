@@ -6,8 +6,8 @@ weight: 20
 {{< callout type="info" >}}
 This page is modified from [MCP-Lifecycle](https://spec.modelcontextprotocol.io/specification/draft/server/resources/) for the MQTT transport layer, modifications include:
 
-- Return resources with resource-id when listing resources
-- Use resource id instead of URI for querying resource contents
+- Return resources with resource Id when listing resources
+- Use resource Id instead of URI for querying resource contents
 
 {{< /callout >}}
 
@@ -118,7 +118,7 @@ supports [pagination]({{< ref "/docs/specification/draft/server/utilities/pagina
   "result": {
     "resources": [
       {
-        "resource-id": 1,
+        "resourceId": 1,
         "uri": "file:///project/src/main.rs",
         "name": "main.rs",
         "description": "Primary application entry point",
@@ -142,7 +142,7 @@ To retrieve resource contents, clients send a `resources/read` request:
   "id": 2,
   "method": "resources/read",
   "params": {
-    "resource-id": 1
+    "resourceId": 1
   }
 }
 ```
@@ -156,7 +156,7 @@ To retrieve resource contents, clients send a `resources/read` request:
   "result": {
     "contents": [
       {
-        "resource-id": 1,
+        "resourceId": 1,
         "uri": "file:///project/src/main.rs",
         "mimeType": "text/x-rust",
         "text": "fn main() {\n    println!(\"Hello world!\");\n}"
@@ -227,7 +227,7 @@ to specific resources and receive notifications when they change:
   "id": 4,
   "method": "resources/subscribe",
   "params": {
-    "resource-id": 1
+    "resourceId": 1
   }
 }
 ```
@@ -239,7 +239,7 @@ to specific resources and receive notifications when they change:
   "jsonrpc": "2.0",
   "method": "notifications/resources/updated",
   "params": {
-    "resource-id": 1,
+    "resourceId": 1,
     "uri": "file:///project/src/main.rs"
   }
 }
@@ -354,7 +354,7 @@ Example error:
     "code": -32002,
     "message": "Resource not found",
     "data": {
-      "resource-id": 1000
+      "resourceId": 1000
     }
   }
 }

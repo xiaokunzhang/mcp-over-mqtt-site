@@ -59,6 +59,10 @@
                     "description": "The MIME type of this resource, if known.",
                     "type": "string"
                 },
+                "resourceId": {
+                    "type": "integer",
+                    "description": "A unique identifier for this request, used to correlate it with the response."
+                },
                 "uri": {
                     "description": "The URI of this resource.",
                     "format": "uri",
@@ -67,6 +71,7 @@
             },
             "required": [
                 "blob",
+                "resourceId",
                 "uri"
             ],
             "type": "object"
@@ -1399,6 +1404,10 @@
                 },
                 "params": {
                     "properties": {
+                        "resourceId": {
+                            "type": "integer",
+                            "description": "A unique identifier for this request, used to correlate it with the response."
+                        },
                         "uri": {
                             "description": "The URI of the resource to read. The URI can use any protocol; it is up to the server how to interpret it.",
                             "format": "uri",
@@ -1406,7 +1415,7 @@
                         }
                     },
                     "required": [
-                        "uri"
+                        "resourceId", "uri"
                     ],
                     "type": "object"
                 }
@@ -1496,6 +1505,10 @@
                     "description": "A human-readable name for this resource.\n\nThis can be used by clients to populate UI elements.",
                     "type": "string"
                 },
+                "resourceId": {
+                    "type": "integer",
+                    "description": "A unique identifier for this request, used to correlate it with the response."
+                },
                 "uri": {
                     "description": "The URI of this resource.",
                     "format": "uri",
@@ -1504,6 +1517,7 @@
             },
             "required": [
                 "name",
+                "resourceId",
                 "uri"
             ],
             "type": "object"
@@ -1515,6 +1529,10 @@
                     "description": "The MIME type of this resource, if known.",
                     "type": "string"
                 },
+                "resourceId": {
+                    "type": "integer",
+                    "description": "A unique identifier for this request, used to correlate it with the response."
+                },
                 "uri": {
                     "description": "The URI of this resource.",
                     "format": "uri",
@@ -1522,7 +1540,7 @@
                 }
             },
             "required": [
-                "uri"
+                "uri", "resourceId"
             ],
             "type": "object"
         },
@@ -1609,6 +1627,10 @@
                 },
                 "params": {
                     "properties": {
+                        "resourceId": {
+                            "type": "integer",
+                            "description": "A unique identifier for this request, used to correlate it with the response."
+                        },
                         "uri": {
                             "description": "The URI of the resource that has been updated. This might be a sub-resource of the one that the client actually subscribed to.",
                             "format": "uri",
@@ -1616,7 +1638,7 @@
                         }
                     },
                     "required": [
-                        "uri"
+                        "uri", "resourceId"
                     ],
                     "type": "object"
                 }
@@ -1873,6 +1895,10 @@
                 },
                 "params": {
                     "properties": {
+                        "resourceId": {
+                            "type": "integer",
+                            "description": "A unique identifier for this request, used to correlate it with the response."
+                        },
                         "uri": {
                             "description": "The URI of the resource to subscribe to. The URI can use any protocol; it is up to the server how to interpret it.",
                             "format": "uri",
@@ -1880,7 +1906,7 @@
                         }
                     },
                     "required": [
-                        "uri"
+                        "uri", "resourceId"
                     ],
                     "type": "object"
                 }
@@ -1923,6 +1949,10 @@
                     "description": "The text of the item. This must only be set if the item can actually be represented as text (not binary data).",
                     "type": "string"
                 },
+                "resourceId": {
+                    "type": "integer",
+                    "description": "A unique identifier for this request, used to correlate it with the response."
+                },
                 "uri": {
                     "description": "The URI of this resource.",
                     "format": "uri",
@@ -1931,6 +1961,7 @@
             },
             "required": [
                 "text",
+                "resourceId",
                 "uri"
             ],
             "type": "object"
@@ -2013,6 +2044,10 @@
                 },
                 "params": {
                     "properties": {
+                        "resourceId": {
+                            "type": "integer",
+                            "description": "A unique identifier for this request, used to correlate it with the response."
+                        },
                         "uri": {
                             "description": "The URI of the resource to unsubscribe from.",
                             "format": "uri",
@@ -2020,7 +2055,7 @@
                         }
                     },
                     "required": [
-                        "uri"
+                        "uri", "resourceId"
                     ],
                     "type": "object"
                 }
