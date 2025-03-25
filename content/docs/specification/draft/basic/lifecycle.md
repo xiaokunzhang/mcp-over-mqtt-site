@@ -47,7 +47,7 @@ sequenceDiagram
 
 After the MCP server starts, it registers its service with the MQTT broker. The presence channel (MQTT topic) for service discovery and registration is: `$mcp-service/presence/<service-id>/<service-name>`.
 
-Coordinator connections of the MCP server **MUST** publish a "service/online" notification to the service presence channel when they start, with the **RETAIN** flag set to `True`.
+The MCP server **MUST** publish a "service/online" notification to the service presence channel when they start, with the **RETAIN** flag set to `True`.
 
 The "service/online" notification **SHOULD** provide only limited information about the service to avoid excessive message size:
 
@@ -75,16 +75,14 @@ Although the client can subscribe to `$mcp-service/presence/+/#` to get all type
 
 ### Service Unregistration
 
-Before disconnecting, the coordinator needs to send an empty payload message to the `$mcp-service/presence/<service-id>/<service-name>` topic to clear the registration information.
+Before disconnecting, the server needs to send an empty payload message to the `$mcp-service/presence/<service-id>/<service-name>` topic to clear the registration information.
 
-When connecting to the MQTT broker, the coordinator must set `$mcp-service/presence/<service-id>/<service-name>` as the will topic, with an empty payload will message, to clear the registration information in case of an unexpected disconnection.
+When connecting to the MQTT broker, the server must set `$mcp-service/presence/<service-id>/<service-name>` as the will topic, with an empty payload will message, to clear the registration information in case of an unexpected disconnection.
 
 On the `$mcp-service/presence/<service-id>/<service-name>` topic:
 
 - When the client receives a `service/online` notification, it should record the `<service-id>` as one of the instances of that `<service-name>`.
 - When the client receives an empty payload message, it should clear the cached `<service-id>`. As long as any instance of that `<service-name>` is online, the client should consider the service to be online.
-
-After a server coordinator disconnects, the client **SHOULD NOT** reinitialize the connection as long as the server worker is still online.
 
 ![Service Discovery](assets/mcp-service-discovery.png)
 
@@ -97,20 +95,16 @@ During this phase, the client and server:
 - Exchange and negotiate capabilities
 - Share implementation details
 
-When a client initialize the connection, the server **MUST** assign a worker connection to the client. If the server has no available worker connections, the server **MAY** create a new worker connection or reject the client connection.
-
-If the coordinator does not support the requested protocol version, it **MUST** respond with an
+If the server does not support the requested protocol version, it **MUST** respond with an
 error indicating the supported version(s) on the RPC channel.
-
-If the coordinator accepts the initialization, it assigns a worker connection to the client and responds with its own capabilities and information, on the RPC channel. If no worker connection is available, the coordinator creates a new worker connection. If for some reason no worker connection can be used, the coordinator **MUST** respond with an error indicating the reason.
 
 The client **MUST** subscribe to the RPC channel (`$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`) before sending the initialization request, with the **No Local** subscription option.
 
-The worker **MUST** subscribe to the RPC channel (`$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`) before responding to the initialization request, with the **No Local** subscription option.
+The server **MUST** subscribe to the RPC channel (`$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`) before responding to the initialization request, with the **No Local** subscription option.
 
 ![mcp-initialize](assets/mcp-initialize-msg-flow.png)
 
-The client **MUST** initiate this phase by sending an `initialize` request containing:
+The client **MUST** initiate this phase by sending an `initialize` request to the topic `$mcp-service/<service-name>` containing:
 
 - Protocol version supported
 - Client capabilities
@@ -137,7 +131,11 @@ The client **MUST** initiate this phase by sending an `initialize` request conta
 }
 ```
 
-The server **MUST** respond with its own capabilities and information:
+The `initialize` request **MUST** include an MQTT user property `mcp-client-id` to identify the client:
+
+- **mcp-client-id**: The client's MQTT client ID
+
+The server **MUST** respond with its own capabilities to the topic `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` and information:
 
 ```json
 {
@@ -228,7 +226,7 @@ Before the MCP server responds to the initialization request, it **MUST** first 
 
 If there are subsequent capability list updates:
 
-- The server (coordinator) will send a notification to: `$mcp-service/capability-change/<service-id>/<service-name>`
+- The server will send a notification to: `$mcp-service/capability-change/<service-id>/<service-name>`
 - The client will send a notification to: `$mcp-client/capability-change/<mcp-client-id>`
 
 The payload of the capability update notification depends on the specific capability that has changed. For example "notifications/tools/list_changed" for tools. After receiving a capability list change notification, the client or server needs to retrieve the updated capability list. See the specific capability documentation for details.
@@ -243,7 +241,7 @@ After the initialization is complete, if the server has resources, the client wi
 
 The topic for the client to subscribe to resource changes is: `$mcp-service/resource-update/<service-id>/<resource-id>`.
 
-When a resource changes, the server coordinator **SHOULD** send a notification to `$mcp-service/resource-update/<service-id>/<resource-id>`, where the `<resource-id>` is the ID of the resource that has changed.
+When a resource changes, the server **SHOULD** send a notification to `$mcp-service/resource-update/<service-id>/<resource-id>`, where the `<resource-id>` is the ID of the resource that has changed.
 
 See [resources subscriptions](/docs/specification/draft/server/resources/#subscriptions) for more details.
 
@@ -261,34 +259,23 @@ Both parties **SHOULD**:
 
 ## Shutdown
 
-### Server Worker Disconnect
+### Server Disconnect
 
-The server worker **MUST** connect with a will message to notify the client when it disconnects unexpectedly, the will topic is `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` and the payload is a "disconnected" notification.
+The server **MUST** connect with a will message to notify the client when it disconnects unexpectedly, the will topic is `$mcp-service/presence/<service-id>/<service-name>` and the payload is empty.
 
-Before a worker connection disconnects, the worker **MUST** send a "disconnected" notification to the topic `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`.
+Before a server disconnects, the server **MUST** send a empty message to the topic `$mcp-service/presence/<service-id>/<service-name>`.
 
-The message format for the server worker's "disconnected" notification is:
-
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "notifications/disconnected"
-}
-```
-
-When the client receives the "disconnected" notification, it **MAY** send another initialization request to the coordinator connection to get a new worker connection.
+When the client receives the empty message on the channel, **MUST** disconnect and **MAY** send another initialization request using a different client-id.
 
 ### Client Disconnect
 
-The server worker **MUST** subscribe to the client's presence channel (`$mcp-client/presence/<mcp-client-id>`) before sending the initialization response.
+The server **MUST** subscribe to the client's presence channel (`$mcp-client/presence/<mcp-client-id>`) before sending the initialization response.
 
 The client **MUST** connect with a will message to notify the server when it disconnects unexpectedly, the will topic is `$mcp-client/presence/<mcp-client-id>` and the payload is a "disconnected" notification.
 
 Before the client disconnects, it **MUST** send a "disconnected" notification to the topic `$mcp-client/presence/<mcp-client-id>`.
 
-If a client want to disconnect from a specific server, it **MUST** send a "disconnected" notification to the topic `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`.
-
-When a client disconnects, the server worker **MUST** disconnect and release its resources.
+After the server receives the "disconnected" notification, it **MUST** unsubscribe the `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` topic.
 
 The message format for the client's "disconnected" notification is:
 
@@ -301,10 +288,10 @@ The message format for the client's "disconnected" notification is:
 
 ## Health Checks
 
-The client or the server worker **MAY** send `ping` requests to the server at any time to check the health of their counterpart.
+The client or the server **MAY** send `ping` requests to the server at any time to check the health of their counterpart.
 
-- If the server worker does not receive a `ping` response from the client within a reasonable time, it **MUST** send a "disconnected" notification to the topic `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>` and disconnect itself.
-- If the client does not receive a `ping` response from the server worker within a reasonable time, it **MUST** send a "disconnected" notification to the topic `$mcp-rpc-endpoint/<mcp-client-id>/<service-name>`, after that it **MAY** send another initialization request to the coordinator connection to get a new worker connection.
+- If the client does not receive a `ping` response from the server within a reasonable time, it **MUST** send a "disconnected" notification to the topic `$mcp-client/presence/<mcp-client-id>` and disconnect itself.
+- If the server does not receive a `ping` response from the client within a reasonable time, it **MUST** send any other PRC requests to the client.
 
 For more information, see the [Ping]({{< ref "/docs/specification/draft/basic/utilities/ping" >}}).
 
@@ -339,7 +326,6 @@ Implementations **SHOULD** be prepared to handle these error cases:
 
 - Protocol version mismatch
 - Failure to negotiate required capabilities
-- Worker connection creation failure
 - Initialize request timeout
 - Shutdown timeout
 
