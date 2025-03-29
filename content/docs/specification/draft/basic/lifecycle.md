@@ -60,7 +60,7 @@ The "service/online" notification **SHOULD** provide only limited information ab
   "method": "notifications/service/online",
   "params": {
       "description": "This is a brief description about the functionalities provided by this service to allow clients to choose as needed. If tools are provided, it explains which tools are available but does not include tool parameters to reduce message size.",
-      "metadata": {}
+      "meta": {}
   }
 }
 ```

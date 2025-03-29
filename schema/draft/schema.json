@@ -1904,7 +1904,7 @@
                             "description": "A description of what this service is.\n\nThis can be used by clients to improve the LLM's understanding of available services. It can be thought of like a \"hint\" to the model.",
                             "type": "string"
                         },
-                        "metadata": {
+                        "meta": {
                             "additionalProperties": true,
                             "description": "The metadata for this service.\n\nThis can be used by clients to know more about the service. E.g., the permissions required to use the service.",
                             "properties": {},

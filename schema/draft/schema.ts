@@ -133,7 +133,7 @@ export interface ServiceOnlineNotification extends Notification {
      *
      * This can be used by clients to know more about the service. E.g., the permissions required to use the service.
      */
-    metadata?: object;
+    meta?: object;
   };
 }
 
