@@ -1,6 +1,14 @@
 ---
 title: MQTT Transport
+type: docs
+weight: 10
 ---
+
+{{< callout type="info" >}}
+This page is modified from [MCP Transport](https://spec.modelcontextprotocol.io/specification/2025-03-26/basic/transports/) and [MCP Lifecycle](https://spec.modelcontextprotocol.io/specification/2025-03-26/basic/lifecycle/) for the MQTT transport layer.
+{{< /callout >}}
+
+{{< callout type="info" >}} **Protocol Revision**: draft {{< /callout >}}
 
 # The MQTT Transport for MCP
 
@@ -34,7 +42,7 @@ To achieve MCP server-side load balancing and scalability, the MCP server can st
 
 The client must first subscribe to the service discovery topic to obtain the list of `service-id`s for a specific `service-name`. Then, based on a custom client strategy (e.g., random selection or round-robin), it initiates an initialization request to one of the `service-id`s.
 
-For details on the corresponding topic name of the topic, refer to the [message topics](#message-topics) section.
+For details on the corresponding topic name of the topic, refer to the [message topics]({{< ref "#message-topics" >}}) section.
 
 ```mermaid
 graph LR
@@ -68,15 +76,15 @@ This allows us to achieve high availability and scalability on the MCP server si
 
 MCP over MQTT transmits messages through MQTT topics. This protocol includes the following message topics:  
 
-| Topic Name                       | Topic Name                                                             | Description                                                                        |
-| -------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Server's Control Topic           | `$mcp-service/{{service-name}}`                                        | Used for sending and receiving initialization messages and other control messages. |
-| Server's Capability Change Topic | `$mcp-service/capability/list-changed/{{service-id}}/{{service-name}}` | Used for sending and receiving server capability list changed notification.        |
-| Server Resource Update Topic     | `$mcp-service/capability/resource-updated/{{service-id}}`              | Used for sending and receiving server resource updated notification.               |
-| Server's Presence Topic          | `$mcp-service/presence/{{service-id}}/{{service-name}}`                | Used for sending and receiving server's online/offline status messages.            |
-| Client's Presence Topic          | `$mcp-client/presence/{{mcp-client-id}}`                               | Used for sending and receiving client's online/offline status messages.            |
-| Client's Capability Change Topic | `$mcp-client/capability/list-changed/{{mcp-client-id}}`                | Used for sending and receiving client capability list changed notification.        |
-| RPC Topic                        | `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}`                 | Used for sending and receiving RPC requests/responses, and notification messages.  |
+| Topic Name                    | Topic Name                                            | Description |
+|---------------------------------|-------------------------------------------------------|-------------|
+| Server's Control Topic          | `$mcp-service/{{service-name}}`                         | Used for sending and receiving initialization messages and other control messages. |
+| Server's Capability Change Topic| `$mcp-service/capability/list-changed/{{service-id}}/{{service-name}}` | Used for sending and receiving server capability list changed notification. |
+| Server Resource Update Topic | `$mcp-service/capability/resource-updated/{{service-id}}` | Used for sending and receiving server resource updated notification. |
+| Server's Presence Topic | `$mcp-service/presence/{{service-id}}/{{service-name}}`   | Used for sending and receiving server's online/offline status messages. |
+| Client's Presence Topic | `$mcp-client/presence/{{mcp-client-id}}`   | Used for sending and receiving client's online/offline status messages. |
+| Client's Capability Change Topic| `$mcp-client/capability/list-changed/{{mcp-client-id}}`       | Used for sending and receiving client capability list changed notification. |
+| RPC Topic                     | `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}`    | Used for sending and receiving RPC requests/responses, and notification messages. |
 
 ## MQTT Protocol Version
 
@@ -103,37 +111,37 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 ## MQTT Topics and Topic Filters
 ### Topic Filters that MCP Server Subscribes to
 
-| Topic Filter                                                                          | Explanation                                                                                          |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `$mcp-service/{{service-name}}`                                                       | The control topic of the MCP server to receive control plane messages.                               |
-| `$mcp-client/capability/list-changed/{{mcp-client-id}}`                               | The client’s capability change topic to receive capability list changed notification of the clients. |
-| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}` <br> - Set **No Local** option | The RPC topic to receive RPC requests, RPC responses, and notifications from a client.               |
+| Topic Filter                                         | Explanation |
+|----------------------------------------------------|-------------|
+| `$mcp-service/{{service-name}}`          | The control topic of the MCP server to receive control plane messages. |
+| `$mcp-client/capability/list-changed/{{mcp-client-id}}`   | The client’s capability change topic to receive capability list changed notification of the clients. |
+| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}` <br> - Set **No Local** option | The RPC topic to receive RPC requests, RPC responses, and notifications from a client. |
 
 ### Topics that MCP Server Publishes to
 
-| Topic Name                                                                                                                                                                           | Messages                                                                                               |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `$mcp-service/capability/list-changed/{{service-id}}/{{service-name}}`                                                                                                               | capability list changed notification.                                                                  |
+| Topic Name                                            | Messages |
+|------------------------------------------------------|----------|
+| `$mcp-service/capability/list-changed/{{service-id}}/{{service-name}}` | capability list changed notification.|
 | `$mcp-service/presence/{{service-id}}/{{service-name}}` <br> - **RETAIN** Flag: true <br> - Also set as a **Will Topic** with empty payload to clear the retain message when offline | Presence messages for the MCP Server. <br> See [ServiceDiscovery](#service-discovery) for more details |
-| `$mcp-service/capability/resource-updated/{{service-id}}`                                                                                                                            | Resource update notification.                                                                          |
-| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}`                                                                                                                               | RPC requests, responses and notifications.                                                             |
+| `$mcp-service/capability/resource-updated/{{service-id}}` | Resource update notification.|
+| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}` | RPC requests, responses and notifications. |
 
 ### Topics that MCP Client Subscribes to
 
-| Topic Filter                                                                                 | Explanation                                                                                    |
-| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `$mcp-service/capability/list-changed/+/{{service-name-filter}}`                             | The capability change topic to receive capability list changed notification of the MCP server. |
-| `$mcp-service/capability/resource-updated/+`                                                 | The resource update topic to receive resource update notification of the MCP server.           |
-| `$mcp-service/presence/+/{{service-name-filter}}`                                            | The presence topic to receive the presence message of the MCP server.                          |
-| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name-filter}}` <br> - Set **No Local** option | The RPC topic to receive PRC requests, responses and notifications sent by the MCP server.     |
+| Topic Filter                                         | Explanation |
+|------------------------------------------------------|-------------|
+| `$mcp-service/capability/list-changed/+/{{service-name-filter}}` | The capability change topic to receive capability list changed notification of the MCP server. |
+| `$mcp-service/capability/resource-updated/+` | The resource update topic to receive resource update notification of the MCP server. |
+| `$mcp-service/presence/+/{{service-name-filter}}`      | The presence topic to receive the presence message of the MCP server. |
+| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name-filter}}` <br> - Set **No Local** option | The RPC topic to receive PRC requests, responses and notifications sent by the MCP server. |
 
 ### Topics that MCP Client Publishes to
 
-| Topic Name                                                                                                           | Messages                                                           |
-| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `$mcp-service/{{service-name}}`  <br> - Set **User Property**, "mcp-client-id": {{MQTT-Client-ID-of-the-MCP-Client}} | Send control plane messages like initialize.                       |
-| `$mcp-client/capability/list-changed/{{mcp-client-id}}`                                                              | Send client capability list changed notification                   |
-| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}`                                                               | The RPC topic to send RPC requests/responses to a specific server. |
+| Topic Name                                         | Messages |
+|---------------------------------------------------|----------|
+| `$mcp-service/{{service-name}}`  <br> - Set **User Property**, "mcp-client-id": {{MQTT-Client-ID-of-the-MCP-Client}}    | Send control plane messages like initialize. |
+| `$mcp-client/capability/list-changed/{{mcp-client-id}}`   | Send client capability list changed notification |
+| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}` | The RPC topic to send RPC requests/responses to a specific server. |
 
 # Lifecycle of MQTT Transport
 
@@ -404,7 +412,7 @@ The client or the server **MAY** send `ping` requests to the server at any time 
 - If the client does not receive a `ping` response from the server within a reasonable time, it **MUST** send a "disconnected" notification to the topic `$mcp-client/presence/{{mcp-client-id}}` and disconnect itself.
 - If the server does not receive a `ping` response from the client within a reasonable time, it **MUST** send any other PRC requests to the client.
 
-<!-- For more information, see the [Ping]({{< ref "/docs/specification/2025-03-26/basic/utilities/ping" >}}). -->
+For more information, see the [Ping]({{< ref "/docs/specification/2025-03-26/basic/utilities/ping" >}}).
 
 ## Timeouts
 
@@ -427,9 +435,9 @@ Below are the recommended default timeout values for each type of RPC request in
 - "completion/complete": 60 seconds
 - "logging/setLevel": 30 seconds
 
-<!-- {{< callout type="info" >}}
+{{< callout type="info" >}}
 Progress requests are sent as notifications and do not require a response, so no timeout is needed.
-{{< /callout >}} -->
+{{< /callout >}}
 
 ## Error Handling
 

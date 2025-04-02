@@ -1,6 +1,15 @@
 ---
 title: Architecture
+cascade:
+  type: docs
+weight: 10
 ---
+
+{{< callout type="info" >}}
+This page is modified from [MCP Architecture](https://spec.modelcontextprotocol.io/specification/2025-03-26/architecture/) for the MQTT transport layer:
+
+- Added the [Core Components of the MQTT Transport]({{< relref "#core-components-of-the-mqtt-transport" >}}) section.
+{{< /callout >}}
 
 The Model Context Protocol (MCP) follows a client-host-server architecture where each
 host can run multiple client instances. This architecture enables users to integrate AI
@@ -201,14 +210,13 @@ sequenceDiagram
 Each capability unlocks specific protocol features for use during the session. For
 example:
 
-<!-- TODO:  -->
-<!-- - Implemented [server features]({{< ref "../server" >}}) must be advertised in the
+- Implemented [server features]({{< ref "../server" >}}) must be advertised in the
   server's capabilities
 - Emitting resource subscription notifications requires the server to declare
   subscription support
 - Tool invocation requires the server to declare tool capabilities
 - [Sampling]({{< ref "../client" >}}) requires the client to declare support in its
-  capabilities -->
+  capabilities
 
 This capability negotiation ensures clients and servers have a clear understanding of
 supported functionality while maintaining protocol extensibility.
