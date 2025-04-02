@@ -2,27 +2,40 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "My Awesome Project",
-  description: "A VitePress Site",
+  title: 'MCP over MQTT',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' }
-    ],
 
-    sidebar: [
-      {
-        text: 'Examples',
-        items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
-        ]
-      }
-    ],
+    search: {
+      provider: 'local',
+    },
+
+    // nav: [
+    //   { text: 'Home', link: '/' },
+    //   { text: 'Examples', link: '/markdown-examples' },
+    // ],
+
+    sidebar: {
+      '/mcp/': [
+        {
+          text: 'Overview',
+          link: '/mcp/',
+        },
+        {
+          text: 'Python SDK',
+          link: '/mcp/sdk/python/',
+        },
+        {
+          text: 'Specification',
+          link: '/mcp/specification/',
+          items: [],
+        },
+      ],
+    },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
-    ]
-  }
+      { icon: 'github', link: 'https://github.com/emqx/mcp-over-mqtt-site' },
+      { icon: 'slack', link: 'https://emqx.slack.com/' },
+    ],
+  },
 })
