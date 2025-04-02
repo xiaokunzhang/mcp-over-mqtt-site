@@ -80,7 +80,7 @@ MCP over MQTT transmits messages through MQTT topics. This protocol includes the
 |---------------------------------|-------------------------------------------------------|-------------|
 | Server's Control Topic          | `$mcp-service/{{service-name}}`                         | Used for sending and receiving control messages (For now it's initialize request). |
 | Server's Capability Change Topic| `$mcp-service/capability/list-changed/{{service-id}}/{{service-name}}` | Used for sending and receiving server capability list changed notification. |
-| Server Resource Update Topic | `$mcp-service/capability/resource-updated/{{service-id}}` | Used for sending and receiving server resource updated notification. |
+| Server Resource Update Topic | `$mcp-service/capability/resource-updated/{{service-id}}/{{service-name}}` | Used for sending and receiving server resource updated notification. |
 | Server's Presence Topic | `$mcp-service/presence/{{service-id}}/{{service-name}}`   | Used for sending and receiving server's online/offline status messages. |
 | Client's Presence Topic | `$mcp-client/presence/{{mcp-client-id}}`   | Used for sending and receiving client's online/offline status messages. |
 | Client's Capability Change Topic| `$mcp-client/capability/list-changed/{{mcp-client-id}}`       | Used for sending and receiving client capability list changed notification. |
@@ -124,7 +124,7 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 |------------------------------------------------------|----------|
 | `$mcp-service/capability/list-changed/{{service-id}}/{{service-name}}` | capability list changed notification.|
 | `$mcp-service/presence/{{service-id}}/{{service-name}}` <br> - **RETAIN** Flag: true <br> - Also set as a **Will Topic** with empty payload to clear the retain message when offline | Presence messages for the MCP server. <br> See [ServiceDiscovery](#service-discovery) for more details |
-| `$mcp-service/capability/resource-updated/{{service-id}}` | Resource update notification.|
+| `$mcp-service/capability/resource-updated/{{service-id}}/{{service-name}}` | Resource update notification.|
 | `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}` | RPC requests, responses and notifications. |
 
 ### Topics that MCP Client Subscribes to
@@ -132,7 +132,7 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 | Topic Filter                                         | Explanation |
 |------------------------------------------------------|-------------|
 | `$mcp-service/capability/list-changed/+/{{service-name-filter}}` | The capability change topic to receive capability list changed notification of the MCP server. |
-| `$mcp-service/capability/resource-updated/+` | The resource update topic to receive resource update notification of the MCP server. |
+| `$mcp-service/capability/resource-updated/+/{{service-name}}` | The resource update topic to receive resource update notification of the MCP server. |
 | `$mcp-service/presence/+/{{service-name-filter}}`      | The presence topic to receive the presence message of the MCP server. |
 | `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name-filter}}` <br> - Set **No Local** option | The RPC topic to receive PRC requests, responses and notifications sent by the MCP server. |
 
@@ -352,9 +352,9 @@ The MCP protocol specifies that the client can subscribe to changes of a specifi
 
 If the server provides the capability to subscribe to resources, the client can subscribe to the resource changes before sending the initialized notification.
 
-The topic for the client to subscribe to resource changes is: `$mcp-service/capability/resource-updated/{{service-id}}`.
+The topic for the client to subscribe to resource changes is: `$mcp-service/capability/resource-updated/{{service-id}}/{{service-name}}`.
 
-When a resource changes, the server **SHOULD** send a notification to `$mcp-service/capability/resource-updated/{{service-id}}`.
+When a resource changes, the server **SHOULD** send a notification to `$mcp-service/capability/resource-updated/{{service-id}}/{{service-name}}`.
 
 ```mermaid
 
@@ -371,7 +371,7 @@ sequenceDiagram
 
     MCP_Server -->> MCP_Client: List Resources Response<br/>Topic: $mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}<br/>URIs: [{{resource-uri}}, {{resource-uri}}, ...]
 
-    MCP_Server -->> MCP_Client: Resource Updated<br/>Topic: $mcp-service/capability/resource-updated/{{service-id}}<br/>URI: {{resource-uri}}
+    MCP_Server -->> MCP_Client: Resource Updated<br/>Topic: $mcp-service/capability/resource-updated/{{service-id}}/{{service-name}}<br/>URI: {{resource-uri}}
 
     MCP_Client ->> MCP_Server: Read Resource<br/>Topic: $mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}<br/>URI: {{resource-uri}}
 
