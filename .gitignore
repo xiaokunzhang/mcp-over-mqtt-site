@@ -1,7 +1,17 @@
-# Hugo output
-public/
-resources/
-.hugo_build.lock
-
-# Editor
-.vscode/
+/coverage
+/src/client/shared.ts
+/src/node/shared.ts
+*.log
+*.tgz
+.DS_Store
+.idea
+.temp
+.vite_opt_cache
+.vscode
+dist
+cache
+temp
+examples-temp
+node_modules
+pnpm-global
+*.timestamp-*.mjs
