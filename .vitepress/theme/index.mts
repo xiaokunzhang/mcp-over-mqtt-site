@@ -5,6 +5,25 @@ import { toRefs } from 'vue'
 
 export default {
   extends: DefaultTheme,
+  enhanceApp({ router }) {
+    router.onBeforeRouteChange = (to: string) => {
+      // TODO: remove this when home page is ready
+      const redirects = {
+        '/': '/mcp/',
+      }
+      const path = to.replace(/\.html$/i, ''),
+        toPath = redirects[path]
+
+      if (toPath) {
+        setTimeout(() => {
+          router.go(toPath)
+        })
+        return false
+      } else {
+        return true
+      }
+    }
+  },
   setup() {
     const { frontmatter } = toRefs(useData())
     const route = useRoute()
