@@ -103,11 +103,12 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 ## MQTT Topics and Topic Filters
 ### Topic Filters that MCP Server Subscribes to
 
-| Topic Filter                                                                          | Explanation                                                                                          |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `$mcp-service/{{service-name}}`                                                       | The control topic of the MCP server to receive control plane messages.                               |
-| `$mcp-client/capability/list-changed/{{mcp-client-id}}`                               | The client’s capability change topic to receive capability list changed notification of the clients. |
-| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}` <br> - Set **No Local** option | The RPC topic to receive RPC requests, RPC responses, and notifications from a client.               |
+| Topic Filter                                                                          | Explanation                                                                                              |
+|---------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| `$mcp-service/{{service-name}}`                                                       | The control topic of the MCP server to receive control messages.                                         |
+| `$mcp-client/capability/list-changed/{{mcp-client-id}}`                               | The MCP client’s capability change topic to receive capability list changed notification of the clients. |
+| `$mcp-client/presence/{{mcp-client-id}}`                                              | The MCP client’s presence topic to receive the disconnected notification of the clients.                 |
+| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}` <br> - Set **No Local** option | The RPC topic to receive RPC requests, RPC responses, and notifications from a MCP client.               |
 
 ### Topics that MCP Server Publishes to
 
@@ -129,11 +130,12 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 
 ### Topics that MCP Client Publishes to
 
-| Topic Name                                                                                                           | Messages                                                           |
-| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `$mcp-service/{{service-name}}`  <br> - Set **User Property**, "mcp-client-id": {{MQTT-Client-ID-of-the-MCP-Client}} | Send control plane messages like initialize.                       |
-| `$mcp-client/capability/list-changed/{{mcp-client-id}}`                                                              | Send client capability list changed notification                   |
-| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}`                                                               | The RPC topic to send RPC requests/responses to a specific server. |
+| Topic Name                                                                                                                   | Messages                                                           |
+|------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| `$mcp-service/{{service-name}}`  <br> - Set **User Property**, "mcp-client-id": {{MQTT-Client-ID-of-the-MCP-Client}}         | Send control messages like the initialize request.                 |
+| `$mcp-client/capability/list-changed/{{mcp-client-id}}`                                                                      | Send client capability list changed notification                   |
+| `$mcp-client/presence/{{mcp-client-id}}` <br> - Also set as a **Will Topic** with a disconnected notification as the payload | Send disconnected notification for the MCP client.                 |
+| `$mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}`                                                                       | The RPC topic to send RPC requests/responses to a specific server. |
 
 # Lifecycle of MQTT Transport
 
@@ -342,9 +344,9 @@ The MCP protocol specifies that the client can subscribe to changes of a specifi
 
 If the server provides the capability to subscribe to resources, the client can subscribe to the resource changes before sending the initialized notification.
 
-The topic for the client to subscribe to resource changes is: `$mcp-service/capability/resource-updated/{{service-id}}`.
+The topic for the client to subscribe to resource changes is: `$mcp-service/capability/resource-updated/{{service-id}}/{{service-name}}`.
 
-When a resource changes, the server **SHOULD** send a notification to `$mcp-service/capability/resource-updated/{{service-id}}`.
+When a resource changes, the server **SHOULD** send a notification to `$mcp-service/capability/resource-updated/{{service-id}}/{{service-name}}`.
 
 ```mermaid
 
@@ -361,7 +363,7 @@ sequenceDiagram
 
     MCP_Server -->> MCP_Client: List Resources Response<br/>Topic: $mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}<br/>URIs: [{{resource-uri}}, {{resource-uri}}, ...]
 
-    MCP_Server -->> MCP_Client: Resource Updated<br/>Topic: $mcp-service/capability/resource-updated/{{service-id}}<br/>URI: {{resource-uri}}
+    MCP_Server -->> MCP_Client: Resource Updated<br/>Topic: $mcp-service/capability/resource-updated/{{service-id}}/{{service-name}}<br/>URI: {{resource-uri}}
 
     MCP_Client ->> MCP_Server: Read Resource<br/>Topic: $mcp-rpc-endpoint/{{mcp-client-id}}/{{service-name}}<br/>URI: {{resource-uri}}
 
