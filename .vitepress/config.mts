@@ -10,6 +10,8 @@ const isTestEnv = process.env.TEST_ENV === 'true'
 export default withMermaid({
   ...defineConfig({
     title: 'MCP over MQTT',
+    description:
+      'Specification and SDK implementations for MCP over MQTT - a transport layer enabling the Model Context Protocol for edge computing, IoT, and cloud services.',
 
     sitemap: {
       hostname: 'https://mqtt.ai',
