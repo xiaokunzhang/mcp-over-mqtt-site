@@ -28,6 +28,8 @@ export default withMermaid({
       }
     },
 
+    srcExclude: ['**/README.md'],
+
     themeConfig: {
       // https://vitepress.dev/reference/default-theme-config
 
@@ -61,11 +63,11 @@ export default withMermaid({
             items: [
               {
                 text: 'Architecture',
-                link: '/mcp/specification/2025-03-26/basic/architecture/',
+                link: '/mcp/specification/2025-03-26/basic/architecture',
               },
               {
                 text: 'MQTT Transport',
-                link: '/mcp/specification/2025-03-26/basic/mqtt_transport/',
+                link: '/mcp/specification/2025-03-26/basic/mqtt_transport',
               },
             ],
           },
