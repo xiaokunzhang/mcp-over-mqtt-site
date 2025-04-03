@@ -2,9 +2,12 @@
   "scripts": {
     "dev": "vitepress dev",
     "build": "vitepress build",
+    "build:test": "cross-env TEST_ENV=true vitepress build",
     "preview": "vitepress preview"
   },
   "devDependencies": {
+    "@types/node": "^22.14.0",
+    "cross-env": "^7.0.3",
     "mermaid": "^11.6.0",
     "typescript": "^5.8.2",
     "vitepress": "^1.6.3",

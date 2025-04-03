@@ -1,11 +1,31 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
+import fs from 'node:fs'
+import path from 'node:path'
+
+// Check if test environment
+const isTestEnv = process.env.TEST_ENV === 'true'
 
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
   ...defineConfig({
     title: 'MCP over MQTT',
-    srcExclude: ['huog/**/*'],
+
+    sitemap: {
+      hostname: 'https://mqtt.ai',
+    },
+
+    buildEnd: ({ outDir }) => {
+      // Generate robots.txt only in test environment
+      if (isTestEnv) {
+        const testRobotsContent = 'User-agent: *\nDisallow: /\n'
+        fs.writeFileSync(path.resolve(outDir, 'robots.txt'), testRobotsContent)
+        console.log('✓ Generated robots.txt for test environment (disallow indexing)')
+      } else {
+        console.log('✓ Using production robots.txt (allow indexing)')
+      }
+    },
+
     themeConfig: {
       // https://vitepress.dev/reference/default-theme-config
 
