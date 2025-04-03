@@ -13,6 +13,10 @@ export default withMermaid({
         provider: 'local',
       },
 
+      editLink: {
+        pattern: 'https://github.com/emqx/mcp-over-mqtt-site/edit/main/:path',
+      },
+
       // nav: [
       //   { text: 'Home', link: '/' },
       //   { text: 'Examples', link: '/markdown-examples' },
