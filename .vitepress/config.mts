@@ -35,9 +35,16 @@ export default withMermaid({
           {
             text: 'Specification',
             link: '/mcp/specification/',
+            collapsed: false,
             items: [
-              // text: '',
-              // link: '',
+              {
+                text: 'Architecture',
+                link: '/mcp/specification/2025-03-26/basic/architecture/',
+              },
+              {
+                text: 'MQTT Transport',
+                link: '/mcp/specification/2025-03-26/basic/mqtt_transport/',
+              },
             ],
           },
         ],
