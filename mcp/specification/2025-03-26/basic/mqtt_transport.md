@@ -48,7 +48,14 @@ The MCP server and client **MUST** use MQTT Protocol version 5.0.
 
 ## QoS
 
-The QoS level for all messages **MUST** be 1.
+The QoS level for all PUBLISH and SUBSCRIBE messages **MUST** be 1.
+
+## User Property
+
+For all MQTT PUBLISH messages, the following user properties **MUST** be set:
+
+- The `MCP-COMPONENT-TYPE` user property **MUST** be set to the MCP component type: `mcp-client` or `mcp-server`.
+- The `MQTT-CLIENT-ID` user property **MUST** be set to the MQTT client ID of the sender.
 
 ## Session Expiry Interval
 
@@ -117,7 +124,6 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 | `$mcp-rpc-endpoint/{mcp-client-id}/{service-name}`    | The RPC topic to send RPC requests/responses to a specific server. |
 
 ::: info
-- The client **MUST** set a **User Property** `mcp-client-id` with the value of the MQTT Client ID when publishing to the topic `$mcp-service/{service-name}`.
 - When connecting to the MQTT broker, the client **MUST** set `$mcp-client/presence/{mcp-client-id}` as the will topic with a "disconnected" notification as the payload to notify the server in case of an unexpected disconnection.
 :::
 
@@ -244,10 +250,6 @@ The client **MUST** initiate this phase by sending an `initialize` request to th
   }
 }
 ```
-
-The `initialize` request **MUST** include an MQTT user property `mcp-client-id` to identify the client:
-
-- **mcp-client-id**: The client's MQTT client ID
 
 The server **MUST** respond with its own capabilities to the topic `$mcp-rpc-endpoint/{mcp-client-id}/{service-name}` and information:
 
