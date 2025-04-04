@@ -2,6 +2,8 @@
 title: MCP over MQTT
 ---
 
+# MCP over MQTT
+
 This is the specification and SDK implementations of MCP over MQTT, an transport layer for the [Model Context Protocol](https://modelcontextprotocol.io).
 
 ## Why MQTT?
