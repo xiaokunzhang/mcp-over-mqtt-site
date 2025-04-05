@@ -62,9 +62,9 @@ The MQTT broker acts as a centralized message router:
 
 ## Server Side Load Balancing and Scalability
 
-To achieve MCP server-side load balancing and scalability, an MCP server can start multiple instances (processes), each using a unique `service-id` as the MQTT Client ID to establish an independent MQTT connection. All instances of an MCP server share the same `service-name`.
+To achieve MCP server-side load balancing and scalability, an MCP server can start multiple instances (processes), each using a unique `server-id` as the MQTT Client ID to establish an independent MQTT connection. All instances of an MCP server share the same `server-name`.
 
-The client must first subscribe to the service discovery topic to obtain the list of `service-id`s for a specific `service-name`. Then, based on a client-defined service selection strategy (e.g., random selection or round-robin), it initiates an `initialize` request to one of the `service-id`s. After initialization is complete, the MCP client communicates with the designated MCP server instance on a specific RPC topic.
+The client must first subscribe to the service discovery topic to obtain the list of `server-id`s for a specific `server-name`. Then, based on a client-defined server selection strategy (e.g., random selection or round-robin), it initiates an `initialize` request to one of the `server-id`s. After initialization is complete, the MCP client communicates with the designated MCP server instance on a specific RPC topic.
 
 ```mermaid
 graph LR
@@ -74,15 +74,15 @@ graph LR
     C3["MCP Client3"]
     C4["MCP Client4"]
 
-    subgraph "MCP Server Instances (service-name-a)"
+    subgraph "MCP Server Instances (server-name-a)"
         S1[Server Instance 1]
         S2[Server Instance 2]
     end
 
-    C1 <-- "RPC topic of client-1 and service-name-a" --> S1
-    C2 <-- "RPC topic of client-2 and service-name-a" --> S1
-    C3 <-- "RPC topic of client-3 and service-name-a" --> S2
-    C4 <-- "RPC topic of client-4 and service-name-a" --> S2
+    C1 <-- "RPC topic of client-1 and server-name-a" --> S1
+    C2 <-- "RPC topic of client-2 and server-name-a" --> S1
+    C3 <-- "RPC topic of client-3 and server-name-a" --> S2
+    C4 <-- "RPC topic of client-4 and server-name-a" --> S2
 
 ```
 

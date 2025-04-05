@@ -8,21 +8,21 @@ This protocol defines the MQTT transport mechanism for client-server communicati
 
 ## Terminology
 
-- **service-name**: The service name is the identifier of a MCP server, which will be included in the topic.
+- **server-name**: The server name is the identifier of a MCP server, which will be included in the topic.
 
-  Multiple MCP servers with the same `service-name` provide exactly the same service. When the MCP client sends an initialize message, it should select one of them according to a client-side determined strategy.
+  Multiple connections with the same `server-name` are considered multiple instances of the same MCP server and provide exactly the same service. When the MCP client sends an initialize message, it should select one of them according to a client-side determined strategy.
 
-  Multiple MCP Servers with different `service-name`s may still provide similar functions. In this case, when the client sends an initialize message, it should select one of them to establish a connection as needed. The selection criteria can be based on the client's permissions, recommendations from a large model, or the user's choice.
+  Multiple MCP Servers with different `server-name`s may still provide similar functions. In this case, when the client sends an initialize message, it should select one of them to establish a connection as needed. The selection criteria can be based on the client's permissions, recommendations from a LLM, or the user's choice.
 
-  The `service-name` must be a hierarchical topic style separated by `/` so that the client can subscribe to a certain type of service using MQTT topic wildcards, for example: `service-type/sub-type/name`.
+  The `server-name` must be a hierarchical topic style separated by `/` so that the client can subscribe to a certain type of MCP server using MQTT topic wildcards, for example: `server-type/sub-type/name`.
 
-  The `service-name` should not `+` and `#` characters.
+  The `server-name` should not `+` and `#` characters.
 
-  The `service-name` should be unique among all MCP servers.
+  The `server-name` should be unique among all MCP servers.
 
-- **service-name-filter**: The MQTT topic filter to match the `service-name`, it may include `/`, `+` and `#` characters. See descriptions about **service-name** for more details.
+- **server-name-filter**: The MQTT topic filter to match the `server-name`, it may include `/`, `+` and `#` characters. See descriptions about **server-name** for more details.
 
-- **service-id**: The MQTT Client ID of a MCP server instance. Any string except `/`, `+` and `#`. It must be globally unique and will also be included in the topic. It is recommended to use a hex string UUID.
+- **server-id**: The MQTT Client ID of a MCP server instance. Any string except `/`, `+` and `#`. It must be globally unique and will also be included in the topic. It is recommended to use a hex string UUID.
 
 - **mcp-client-id**: The MQTT Client ID of the client. Any string except `/`, `+` and `#`. It must be globally unique and will be included in the topic. Each time an initialization request is made, a different client-id must be used. It is recommended to use a hex string UUID.
 
@@ -34,13 +34,13 @@ MCP over MQTT transmits messages through MQTT topics. This protocol includes the
 
 | Topic Name                       | Topic Name                                                             | Description                                                                        |
 |----------------------------------|------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| Server's Control Topic           | `$mcp-service/{service-name}`                                          | Used for sending and receiving initialization messages and other control messages. |
-| Server's Capability Change Topic | `$mcp-service/capability/list-changed/{service-id}/{service-name}`     | Used for sending and receiving server capability list changed notification.        |
-| Server Resource Update Topic     | `$mcp-service/capability/resource-updated/{service-id}/{service-name}` | Used for sending and receiving server resource updated notification.               |
-| Server's Presence Topic          | `$mcp-service/presence/{service-id}/{service-name}`                    | Used for sending and receiving server's online/offline status messages.            |
+| Server's Control Topic           | `$mcp-server/{server-name}`                                          | Used for sending and receiving initialization messages and other control messages. |
+| Server's Capability Change Topic | `$mcp-server/capability/list-changed/{server-id}/{server-name}`     | Used for sending and receiving server capability list changed notification.        |
+| Server Resource Update Topic     | `$mcp-server/capability/resource-updated/{server-id}/{server-name}` | Used for sending and receiving server resource updated notification.               |
+| Server's Presence Topic          | `$mcp-server/presence/{server-id}/{server-name}`                    | Used for sending and receiving server's online/offline status messages.            |
 | Client's Presence Topic          | `$mcp-client/presence/{mcp-client-id}`                                 | Used for sending and receiving client's online/offline status messages.            |
 | Client's Capability Change Topic | `$mcp-client/capability/list-changed/{mcp-client-id}`                  | Used for sending and receiving client capability list changed notification.        |
-| RPC Topic                        | `$mcp-rpc-endpoint/{mcp-client-id}/{service-name}`                     | Used for sending and receiving RPC requests/responses, and notification messages.  |
+| RPC Topic                        | `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`                     | Used for sending and receiving RPC requests/responses, and notification messages.  |
 
 ## MQTT Protocol Version
 
@@ -65,7 +65,7 @@ The session expiry interval **MUST** be set to 0, meaning the session will be cl
 
 ### MCP Server
 
-The Client ID of the MCP server can be any string except `/`, `+` and `#`, referred to as `service-id`. It is recommended to use a hex string UUID.
+The Client ID of the MCP server can be any string except `/`, `+` and `#`, referred to as `server-id`. It is recommended to use a hex string UUID.
 
 ### MCP Client
 
@@ -77,27 +77,27 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 
 | Topic Filter                                          | Explanation                                                                                              |
 |-------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| `$mcp-service/{service-name}`                         | The control topic of the MCP server to receive control messages.                                         |
+| `$mcp-server/{server-name}`                         | The control topic of the MCP server to receive control messages.                                         |
 | `$mcp-client/capability/list-changed/{mcp-client-id}` | The MCP client’s capability change topic to receive capability list changed notification of the clients. |
 | `$mcp-client/presence/{mcp-client-id}`                | The MCP client’s presence topic to receive the disconnected notification of the clients.                 |
-| `$mcp-rpc-endpoint/{mcp-client-id}/{service-name}`    | The RPC topic to receive RPC requests, RPC responses, and notifications from a MCP client.               |
+| `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`    | The RPC topic to receive RPC requests, RPC responses, and notifications from a MCP client.               |
 
 ::: info
-- The server **MUST** set the **No Local** option for the RPC topic (`$mcp-rpc-endpoint/{mcp-client-id}/{service-name}`) subscription to avoid receiving its own messages.
+- The server **MUST** set the **No Local** option for the RPC topic (`$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`) subscription to avoid receiving its own messages.
 :::
 
 ### MCP Server Publications
 
 | Topic Name                                                             | Messages                                                                                               |
 |------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| `$mcp-service/capability/list-changed/{service-id}/{service-name}`     | capability list changed notification.                                                                  |
-| `$mcp-service/presence/{service-id}/{service-name}`                    | Presence messages for the MCP Server. <br> See [ServiceDiscovery](#service-discovery) for more details |
-| `$mcp-service/capability/resource-updated/{service-id}/{service-name}` | Resource update notification.                                                                          |
-| `$mcp-rpc-endpoint/{mcp-client-id}/{service-name}`                     | RPC requests, responses and notifications.                                                             |
+| `$mcp-server/capability/list-changed/{server-id}/{server-name}`     | capability list changed notification.                                                                  |
+| `$mcp-server/presence/{server-id}/{server-name}`                    | Presence messages for the MCP Server. <br> See [ServiceDiscovery](#service-discovery) for more details |
+| `$mcp-server/capability/resource-updated/{server-id}/{server-name}` | Resource update notification.                                                                          |
+| `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`                     | RPC requests, responses and notifications.                                                             |
 
 ::: info
-- The server **MUST** set the **RETAIN** flag to `True` for the topic `$mcp-service/presence/{service-id}/{service-name}` when publishing the service presence message.
-- When connecting to the MQTT broker, the server **MUST** set `$mcp-service/presence/{service-id}/{service-name}` as the will topic with an empty payload to clear the retain message in case of an unexpected disconnection.
+- The server **MUST** set the **RETAIN** flag to `True` for the topic `$mcp-server/presence/{server-id}/{server-name}` when publishing the server presence message.
+- When connecting to the MQTT broker, the server **MUST** set `$mcp-server/presence/{server-id}/{server-name}` as the will topic with an empty payload to clear the retain message in case of an unexpected disconnection.
 :::
 
 
@@ -105,23 +105,23 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 
 | Topic Filter                                                       | Explanation                                                                                    |
 |--------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| `$mcp-service/capability/list-changed/+/{service-name-filter}`     | The capability change topic to receive capability list changed notification of the MCP server. |
-| `$mcp-service/capability/resource-updated/+/{service-name-filter}` | The resource update topic to receive resource update notification of the MCP server.           |
-| `$mcp-service/presence/+/{service-name-filter}`                    | The presence topic to receive the presence message of the MCP server.                          |
-| `$mcp-rpc-endpoint/{mcp-client-id}/{service-name-filter}`          | The RPC topic to receive PRC requests, responses and notifications sent by the MCP server.     |
+| `$mcp-server/capability/list-changed/+/{server-name-filter}`     | The capability change topic to receive capability list changed notification of the MCP server. |
+| `$mcp-server/capability/resource-updated/+/{server-name-filter}` | The resource update topic to receive resource update notification of the MCP server.           |
+| `$mcp-server/presence/+/{server-name-filter}`                    | The presence topic to receive the presence message of the MCP server.                          |
+| `$mcp-rpc-endpoint/{mcp-client-id}/{server-name-filter}`          | The RPC topic to receive PRC requests, responses and notifications sent by the MCP server.     |
 
 ::: info
-- The client **MUST** set the **No Local** option for the RPC topic (`$mcp-rpc-endpoint/{mcp-client-id}/{service-name-filter}`) subscription to avoid receiving its own messages.
+- The client **MUST** set the **No Local** option for the RPC topic (`$mcp-rpc-endpoint/{mcp-client-id}/{server-name-filter}`) subscription to avoid receiving its own messages.
 :::
 
 ### MCP Client Publications
 
 | Topic Name                                            | Messages                                                           |
 |-------------------------------------------------------|--------------------------------------------------------------------|
-| `$mcp-service/{service-name}`                         | Send control messages like the initialize request.                 |
+| `$mcp-server/{server-name}`                         | Send control messages like the initialize request.                 |
 | `$mcp-client/capability/list-changed/{mcp-client-id}` | Send client capability list changed notification                   |
 | `$mcp-client/presence/{mcp-client-id}`                | Send disconnected notification for the MCP client.                 |
-| `$mcp-rpc-endpoint/{mcp-client-id}/{service-name}`    | The RPC topic to send RPC requests/responses to a specific server. |
+| `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`    | The RPC topic to send RPC requests/responses to a specific server. |
 
 ::: info
 - When connecting to the MQTT broker, the client **MUST** set `$mcp-client/presence/{mcp-client-id}` as the will topic with a "disconnected" notification as the payload to notify the server in case of an unexpected disconnection.
@@ -133,19 +133,19 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 
 ### Service Registration
 
-After the MCP server starts, it registers its service with the MQTT broker. The presence topic for service discovery and registration is: `$mcp-service/presence/{service-id}/{service-name}`.
+After the MCP server starts, it registers its service with the MQTT broker. The presence topic for service discovery and registration is: `$mcp-server/presence/{server-id}/{server-name}`.
 
-The MCP server **MUST** publish a "service/online" notification to the service presence topic when they start, with the **RETAIN** flag set to `True`.
+The MCP server **MUST** publish a "server/online" notification to the service presence topic when they start, with the **RETAIN** flag set to `True`.
 
-The "service/online" notification **SHOULD** provide only limited information about the service to avoid the message size being too large. The client can request more detailed information after initialization.
+The "server/online" notification **SHOULD** provide only limited information about the server to avoid the message size being too large. The client can request more detailed information after initialization.
 
-- A brief description of the MCP server's functionality to help clients determine which services they need to call.
+- A brief description of the MCP server's functionality to help clients determine which MCP servers they need to call.
 - Some metadata, such as hints about the permissions required to access this MCP server, to help clients quickly assess whether they have access.
 
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "notifications/service/online",
+  "method": "notifications/server/online",
   "params": {
       "description": "This is a brief description about the functionalities provided by this MCP server to allow clients to choose as needed. If tools are provided, it explains what tools are available but does not include tool parameters to reduce message size.",
       "meta": {
@@ -160,22 +160,22 @@ The "service/online" notification **SHOULD** provide only limited information ab
 
 More detailed information, such as parameter details of the tools, **SHOULD** only be fetched by the client when needed, by sending `**/list` requests to the server.
 
-The client can subscribe to the `$mcp-service/presence/+/{service-name-filter}` topic at any time, where `{service-name-filter}` is a filter for the service name.
+The client can subscribe to the `$mcp-server/presence/+/{server-name-filter}` topic at any time, where `{server-name-filter}` is a filter for the server name.
 
-For example, if the service name is `{service-type}/{sub-type}/{name}`, and the client determines through its permissions that it can only access services of type `{service-type}/{sub-type}`, it can subscribe to `$mcp-service/presence/+/{service-type}/{sub-type}/#`, thereby subscribing to the service presence topic for all services of the `{sub-type}` type at once.
+For example, if the server name is `{server-type}/{sub-type}/{name}`, and the client determines through its permissions that it can only access MCP servers of type `{server-type}/{sub-type}`, it can subscribe to `$mcp-server/presence/+/{server-type}/{sub-type}/#`, thereby subscribing to the service presence topic for all MCP servers of the `{sub-type}` type at once.
 
-Although the client can subscribe to `$mcp-service/presence/+/#` to get all types of services, the administrator might restrict it through ACL (Access Control List) on the MQTT broker to only send and receive messages on RPC topics like `$mcp-rpc-endpoint/{mcp-client-id}/{service-type}/{sub-type}/#`. Therefore, subscribing to overly broad topics is not useful. By designing the `{service-name-filter}` appropriately, the client can reduce interference from irrelevant information.
+Although the client can subscribe to `$mcp-server/presence/+/#` to get all types of MCP servers, the administrator might restrict it through ACL (Access Control List) on the MQTT broker to only send and receive messages on RPC topics like `$mcp-rpc-endpoint/{mcp-client-id}/{server-type}/{sub-type}/#`. Therefore, subscribing to overly broad topics is not useful. By designing the `{server-name-filter}` appropriately, the client can reduce interference from irrelevant information.
 
 ### Service Unregistration
 
-When connecting to the MQTT broker, the server must set `$mcp-service/presence/{service-id}/{service-name}` as the will topic, with an empty payload will message, to clear the registration information in case of an unexpected disconnection.
+When connecting to the MQTT broker, the server must set `$mcp-server/presence/{server-id}/{server-name}` as the will topic, with an empty payload will message, to clear the registration information in case of an unexpected disconnection.
 
-Before actively disconnecting from the MQTT broker, the server **MUST** send an empty payload message to the `$mcp-service/presence/{service-id}/{service-name}` topic to clear the registration information.
+Before actively disconnecting from the MQTT broker, the server **MUST** send an empty payload message to the `$mcp-server/presence/{server-id}/{server-name}` topic to clear the registration information.
 
-On the `$mcp-service/presence/{service-id}/{service-name}` topic:
+On the `$mcp-server/presence/{server-id}/{server-name}` topic:
 
-- When the client receives a `service/online` notification, it should record the `{service-id}` as one of the instances of that `{service-name}`.
-- When the client receives an empty payload message, it should clear the cached `{service-id}`. As long as any instance of that `{service-name}` is online, the client should consider the service to be online.
+- When the client receives a `server/online` notification, it should record the `{server-id}` as one of the instances of that `{server-name}`.
+- When the client receives an empty payload message, it should clear the cached `{server-id}`. As long as any instance of that `{server-name}` is online, the client should consider the MCP server to be online.
 
 The message flow for service registration and unregistration is as follows: 
 
@@ -185,19 +185,19 @@ sequenceDiagram
     participant MQTT_Broker as MQTT Broker
     participant MCP_Client as MCP Client
 
-    MCP_Server ->> MQTT_Broker: Register Service<br/>Topic: $mcp-service/presence/{service-id}/{service-name}<br/>Retain: True
+    MCP_Server ->> MQTT_Broker: Register Service<br/>Topic: $mcp-server/presence/{server-id}/{server-name}<br/>Retain: True
     Note right of MQTT_Broker: Store Retained Messages
 
-    MCP_Client ->> MQTT_Broker: Subscribe Services<br/>Topic Filter: $mcp-service/presence/+/ {service-name-filter}
+    MCP_Client ->> MQTT_Broker: Subscribe Services<br/>Topic Filter: $mcp-server/presence/+/ {server-name-filter}
 
-    MQTT_Broker ->> MCP_Client: Description of Service<br/>Topic: $mcp-service/presence/{service-id}/{service-name}<br/>Payload: "notifications/service-online"
-    Note left of MCP_Client: Record the service-id for a service-name.
+    MQTT_Broker ->> MCP_Client: Description of Service<br/>Topic: $mcp-server/presence/{server-id}/{server-name}<br/>Payload: "notifications/server/online"
+    Note left of MCP_Client: Record the server-id for a server-name.
 
-    MCP_Server ->> MQTT_Broker: Unregister Service<br/>Topic: $mcp-service/presence/{service-id}/{service-name}<br/>Retain: True<br/>Payload: Empty
+    MCP_Server ->> MQTT_Broker: Unregister Service<br/>Topic: $mcp-server/presence/{server-id}/{server-name}<br/>Retain: True<br/>Payload: Empty
     Note right of MQTT_Broker: Clean Retained Messages
 
-    MQTT_Broker ->> MCP_Client: Description of Service<br/>Topic: $mcp-service/presence/{service-id}/{service-name}<br/>Payload: Empty
-    Note left of MCP_Client: Remove the service-id
+    MQTT_Broker ->> MCP_Client: Description of Service<br/>Topic: $mcp-server/presence/{server-id}/{server-name}<br/>Payload: Empty
+    Note left of MCP_Client: Remove the server-id
 ```
 
 ## Initialization
@@ -206,9 +206,9 @@ This section only describes the MQTT transport specific parts of the initializat
 
 The initialization phase **MUST** be the first interaction between client and server.
 
-The client **MUST** subscribe to the RPC topic (`$mcp-rpc-endpoint/{mcp-client-id}/{service-name}`) before sending the initialization request, with the **No Local** subscription option.
+The client **MUST** subscribe to the RPC topic (`$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`) before sending the initialization request, with the **No Local** subscription option.
 
-The server **MUST** subscribe to the RPC topic (`$mcp-rpc-endpoint/{mcp-client-id}/{service-name}`) before responding to the initialization response, with the **No Local** subscription option.
+The server **MUST** subscribe to the RPC topic (`$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`) before responding to the initialization response, with the **No Local** subscription option.
 
 ```mermaid
 sequenceDiagram
@@ -216,15 +216,15 @@ sequenceDiagram
   participant MCP_Server as MCP Server
 
   Note right of MCP_Client: Subscribe the<br/>server's RPC topic
-  MCP_Client ->> MCP_Server: Initialize Request<br/>Topic: $mcp-service/{service-name}
+  MCP_Client ->> MCP_Server: Initialize Request<br/>Topic: $mcp-server/{server-name}
   Note left of MCP_Server: Subscribe the<br/>client's RPC topic
-  MCP_Server ->> MCP_Client: Initialize Response<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{service-name}
-  MCP_Client ->> MCP_Server: Initialized<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{service-name}
-  MCP_Client ->> MCP_Server: RPC Req/Resp/Notification<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{service-name}
-  MCP_Server ->> MCP_Client: RPC Req/Resp/Notification<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{service-name}
+  MCP_Server ->> MCP_Client: Initialize Response<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}
+  MCP_Client ->> MCP_Server: Initialized<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}
+  MCP_Client ->> MCP_Server: RPC Req/Resp/Notification<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}
+  MCP_Server ->> MCP_Client: RPC Req/Resp/Notification<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}
 ```
 
-The client **MUST** initiate this phase by sending an `initialize` request to the topic `$mcp-service/{service-name}` containing:
+The client **MUST** initiate this phase by sending an `initialize` request to the topic `$mcp-server/{server-name}` containing:
 
 - Protocol version supported
 - Client capabilities
@@ -251,7 +251,7 @@ The client **MUST** initiate this phase by sending an `initialize` request to th
 }
 ```
 
-The server **MUST** respond with its own capabilities to the topic `$mcp-rpc-endpoint/{mcp-client-id}/{service-name}` and information:
+The server **MUST** respond with its own capabilities to the topic `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}` and information:
 
 ```json
 {
@@ -280,7 +280,7 @@ The server **MUST** respond with its own capabilities to the topic `$mcp-rpc-end
 }
 ```
 
-After successful initialization, the client **MUST** send an initialized notification to indicate it is ready to begin normal operations, to the topic `$mcp-rpc-endpoint/{mcp-client-id}/{service-name}`:
+After successful initialization, the client **MUST** send an initialized notification to indicate it is ready to begin normal operations, to the topic `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`:
 
 ```json
 {
@@ -291,15 +291,15 @@ After successful initialization, the client **MUST** send an initialized notific
 
 ## Capability List Changed
 
-Before initiating the Initialize request, the MCP client **MUST** subscribe to the MCP server's capability list changed topic: `$mcp-service/capability/list-changed/+/{service-name-filter}`, where `{service-name-filter}` is a filter for the service name.
+Before initiating the Initialize request, the MCP client **MUST** subscribe to the MCP server's capability list changed topic: `$mcp-server/capability/list-changed/+/{server-name-filter}`, where `{server-name-filter}` is a filter for the server name.
 
-For example, during the service discovery phase, if a service named `{service-type}/{sub-type}/{name}` is available, the client can subscribe to `$mcp-service/capability/list-changed/+/{service-type}/{sub-type}/#`, thereby subscribing to the capability list changed topic for all services of the `{sub-type}` type at once.
+For example, during the service discovery phase, if a MCP server named `{server-type}/{sub-type}/{name}` is available, the client can subscribe to `$mcp-server/capability/list-changed/+/{server-type}/{sub-type}/#`, thereby subscribing to the capability list changed topic for all MCP servers of the `{sub-type}` type at once.
 
 Before the MCP server responds to the initialization request, it **MUST** first subscribe to the MCP client's capability list changed topic: `$mcp-client/capability/list-changed/{mcp-client-id}`.
 
 If there are subsequent capability list updates:
 
-- The server will send a notification to: `$mcp-service/capability/list-changed/{service-id}/{service-name}`
+- The server will send a notification to: `$mcp-server/capability/list-changed/{server-id}/{server-name}`
 - The client will send a notification to: `$mcp-client/capability/list-changed/{mcp-client-id}`
 
 The payload of the capability list changed notification depends on the specific capability that has changed. For example "notifications/tools/list_changed" for tools. After receiving a capability list change notification, the client or server needs to retrieve the updated capability list. See the specific capability documentation for details.
@@ -317,11 +317,11 @@ sequenceDiagram
     MCP_Server ->> MCP_Client: Initialize Response
     MCP_Client ->> MCP_Server: Initialized
 
-    MCP_Server -->> MCP_Client: Capability List Changed<br/>Topic: $mcp-service/capability/list-changed/{service-id}/{service-name}
+    MCP_Server -->> MCP_Client: Capability List Changed<br/>Topic: $mcp-server/capability/list-changed/{server-id}/{server-name}
 
-    MCP_Client ->> MCP_Server: List Capability<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{service-name}
+    MCP_Client ->> MCP_Server: List Capability<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}
 
-    MCP_Server -->> MCP_Client: List Capability Response<br/>$mcp-rpc-endpoint/{mcp-client-id}/{service-name}
+    MCP_Server -->> MCP_Client: List Capability Response<br/>$mcp-rpc-endpoint/{mcp-client-id}/{server-name}
 ```
 
 ## Resource Update
@@ -330,9 +330,9 @@ The MCP protocol specifies that the client can subscribe to changes of a specifi
 
 If the server provides the capability to subscribe to resources, the client can subscribe to the resource changes before sending the initialized notification.
 
-The topic for the client to subscribe to resource changes is: `$mcp-service/capability/resource-updated/{service-id}/{service-name}`.
+The topic for the client to subscribe to resource changes is: `$mcp-server/capability/resource-updated/{server-id}/{server-name}`.
 
-When a resource changes, the server **SHOULD** send a notification to `$mcp-service/capability/resource-updated/{service-id}/{service-name}`.
+When a resource changes, the server **SHOULD** send a notification to `$mcp-server/capability/resource-updated/{server-id}/{server-name}`.
 
 ```mermaid
 
@@ -345,24 +345,24 @@ sequenceDiagram
     Note right of MCP_Client: Client subscribes the server's<br/>resource update topic
     MCP_Client ->> MCP_Server: Initialized
 
-    MCP_Client ->> MCP_Server: List Resources<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{service-name}
+    MCP_Client ->> MCP_Server: List Resources<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}
 
-    MCP_Server -->> MCP_Client: List Resources Response<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{service-name}<br/>URIs: [{resource-uri}, {resource-uri}, ...]
+    MCP_Server -->> MCP_Client: List Resources Response<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}<br/>URIs: [{resource-uri}, {resource-uri}, ...]
 
-    MCP_Server -->> MCP_Client: Resource Updated<br/>Topic: $mcp-service/capability/resource-updated/{service-id}/{service-name}<br/>URI: {resource-uri}
+    MCP_Server -->> MCP_Client: Resource Updated<br/>Topic: $mcp-server/capability/resource-updated/{server-id}/{server-name}<br/>URI: {resource-uri}
 
-    MCP_Client ->> MCP_Server: Read Resource<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{service-name}<br/>URI: {resource-uri}
+    MCP_Client ->> MCP_Server: Read Resource<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}<br/>URI: {resource-uri}
 
-    MCP_Server -->> MCP_Client: Read Resource Response<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{service-name}<br/>URI: {resource-uri}
+    MCP_Server -->> MCP_Client: Read Resource Response<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}<br/>URI: {resource-uri}
 ```
 
 ## Shutdown
 
 ### Server Disconnect
 
-The server **MUST** connect with a will message to notify the client when it disconnects unexpectedly, the will topic is `$mcp-service/presence/{service-id}/{service-name}` and the payload is empty.
+The server **MUST** connect with a will message to notify the client when it disconnects unexpectedly, the will topic is `$mcp-server/presence/{server-id}/{server-name}` and the payload is empty.
 
-Before a server disconnects, the server **MUST** send a empty message to the topic `$mcp-service/presence/{service-id}/{service-name}`.
+Before a server disconnects, the server **MUST** send a empty message to the topic `$mcp-server/presence/{server-id}/{server-name}`.
 
 When the client receives the empty message on this topic, **MUST** disconnect and **MAY** send another initialization request using a different client-id.
 
@@ -374,7 +374,7 @@ The client **MUST** connect with a will message to notify the server when it dis
 
 Before the client disconnects, it **MUST** send a "disconnected" notification to the topic `$mcp-client/presence/{mcp-client-id}`.
 
-After the server receives the "disconnected" notification, it **MUST** unsubscribe the `$mcp-rpc-endpoint/{mcp-client-id}/{service-name}` topic.
+After the server receives the "disconnected" notification, it **MUST** unsubscribe the `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}` topic.
 
 The message format for the client's "disconnected" notification is:
 
