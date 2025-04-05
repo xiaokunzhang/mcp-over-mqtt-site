@@ -25,7 +25,7 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP(
     "demo_mcp_server/calculator",
     log_level="DEBUG",
-    mqtt_service_description="A simple FastMCP server that exposes a calculator tool",
+    mqtt_server_description="A simple FastMCP server that exposes a calculator tool",
     mqtt_options={
         "host": "broker.emqx.io",
     },
@@ -50,46 +50,45 @@ In the same project, let's create a simple MCP client that connects to the serve
 
 ```python
 # demo_mcp_client.py
+import logging
 import anyio
 import mcp.client.mqtt as mcp_mqtt
-import logging
 from mcp.shared.mqtt import configure_logging
 
 configure_logging(level="DEBUG")
 logger = logging.getLogger(__name__)
 
-async def on_mcp_server_presence(client, service_name, status):
-    if status == "online":
-        logger.info(f"Connecting to {service_name}...")
-        await client.initialize_mcp_server(service_name)
+async def on_mcp_server_discovered(client, server_name):
+    logger.info(f"Discovered {server_name}, connecting ...")
+    await client.initialize_mcp_server(server_name)
 
-async def on_mcp_connect(client, service_name, connect_result):
-    capabilities = client.service_sessions[service_name].server_info.capabilities
+async def on_mcp_connect(client, server_name, connect_result):
+    capabilities = client.get_session(server_name).server_info.capabilities
+    logger.info(f"Capabilities of {server_name}: {capabilities}")
     if capabilities.prompts:
-        prompts = await client.list_prompts(service_name)
-        logger.info(f"Prompts of {service_name}: {prompts}")
+        prompts = await client.list_prompts(server_name)
+        logger.info(f"Prompts of {server_name}: {prompts}")
     if capabilities.resources:
-        resources = await client.list_resources(service_name)
-        logger.info(f"Resources of {service_name}: {resources}")
-        resource_templates = await client.list_resource_templates(service_name)
-        logger.info(f"Resource templates of {service_name}: {resource_templates}")
+        resources = await client.list_resources(server_name)
+        logger.info(f"Resources of {server_name}: {resources}")
+        resource_templates = await client.list_resource_templates(server_name)
+        logger.info(f"Resources templates of {server_name}: {resource_templates}")
     if capabilities.tools:
-        toolsResult = await client.list_tools(service_name)
+        toolsResult = await client.list_tools(server_name)
         tools = toolsResult.tools
-        logger.info(f"Tools of {service_name}: {tools}")
+        logger.info(f"Tools of {server_name}: {tools}")
         if tools[0].name == "add":
-            result = await client.call_tool(service_name, name = tools[0].name, arguments={"a": 1, "b": 2})
+            result = await client.call_tool(server_name, name = tools[0].name, arguments={"a": 1, "b": 2})
             logger.info(f"Calling the tool as add(a=1, b=2), result: {result}")
 
-async def on_mcp_disconnect(client, service_name, reason):
-    logger.info(f"Disconnected from {service_name}, reason: {reason}")
-    logger.info(f"Services now: {client.service_sessions.keys()}")
+async def on_mcp_disconnect(client, server_name):
+    logger.info(f"Disconnected from {server_name}")
 
 async def main():
     async with mcp_mqtt.MqttTransportClient(
         "test_client",
         auto_connect_to_mcp_server = True,
-        on_mcp_server_presence = on_mcp_server_presence,
+        on_mcp_server_discovered = on_mcp_server_discovered,
         on_mcp_connect = on_mcp_connect,
         on_mcp_disconnect = on_mcp_disconnect,
         mqtt_options = mcp_mqtt.MqttOptions(
