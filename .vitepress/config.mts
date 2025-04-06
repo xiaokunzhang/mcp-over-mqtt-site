@@ -53,6 +53,10 @@ export default withMermaid({
             link: '/mcp/',
           },
           {
+            text: 'Use Cases',
+            link: '/mcp/use-cases/',
+          },
+          {
             text: 'Python SDK',
             link: '/mcp/sdk/python/',
           },
