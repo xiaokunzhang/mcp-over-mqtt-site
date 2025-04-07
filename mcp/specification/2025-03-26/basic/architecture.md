@@ -54,17 +54,18 @@ With the exception that the clients and servers communicate with the MQTT broker
 
 See [Core Components](https://spec.modelcontextprotocol.io/specification/2025-03-26/architecture/#core-components)
 
-### Broker
+### MQTT Broker
 
 The MQTT broker acts as a centralized message router:
 - Facilitates communication between clients and servers.
 - Support service discovery and service registration (via retained messages).
+- Authenticates and authorizes clients and servers.
 
 ## Server Side Load Balancing and Scalability
 
 To achieve MCP server-side load balancing and scalability, an MCP server can start multiple instances (processes), each using a unique `server-id` as the MQTT Client ID to establish an independent MQTT connection. All instances of an MCP server share the same `server-name`.
 
-The client must first subscribe to the service discovery topic to obtain the list of `server-id`s for a specific `server-name`. Then, based on a client-defined server selection strategy (e.g., random selection or round-robin), it initiates an `initialize` request to one of the `server-id`s. After initialization is complete, the MCP client communicates with the designated MCP server instance on a specific RPC topic.
+The client must first subscribe to the service discovery topic to obtain the list of `server-id`s for a specific `server-name`. Then, based on a client-defined server selection strategy (e.g., random selection or round-robin), it initiates an `initialize` request to one of the `server-id`s. After initialization is complete, the MCP client communicates with the selected MCP server instance on a specific RPC topic.
 
 ```mermaid
 graph LR
@@ -79,15 +80,15 @@ graph LR
         S2[Server Instance 2]
     end
 
-    C1 <-- "RPC topic of client-1 and server-name-a" --> S1
-    C2 <-- "RPC topic of client-2 and server-name-a" --> S1
-    C3 <-- "RPC topic of client-3 and server-name-a" --> S2
-    C4 <-- "RPC topic of client-4 and server-name-a" --> S2
+    C1 <-- "RPC topic of client-1 and server instance 1" --> S1
+    C2 <-- "RPC topic of client-2 and server instance 1" --> S1
+    C3 <-- "RPC topic of client-3 and server instance 2" --> S2
+    C4 <-- "RPC topic of client-4 and server instance 2" --> S2
 
 ```
 
-This allows us to achieve high availability and scalability on the MCP server side, each MCP server can start multiple instances (processes):
+This allows us to achieve high availability and scalability on the MCP server side:
 
-- When scaling up, existing MCP clients remain connected to the old server processes, while new MCP clients have the opportunity to initiate initialization requests to the new server processes.
+- When scaling up, existing MCP clients remain connected to the old server instances, while new MCP clients have the opportunity to initiate initialization requests to the new server instances.
 
-- When scaling down, MCP clients could re-initiate initialization requests to the MCP server, thereby connecting to another server process.
+- When scaling down, MCP clients could re-initiate initialization requests to the MCP server, thereby connecting to another server instance.

@@ -10,7 +10,7 @@ This is the specification and SDK implementations of MCP over MQTT, an transport
 
 MQTT is a lightweight and widely used protocol for IoT and edge computing. It is designed for unreliable networks and low bandwidth, making it a good choice for edge devices and cloud services to communicate with each other.
 
-Introducing MQTT as a transport layer for MCP enables the protocol to be used in a wider range of applications, including edge computing, IoT, and cloud services -- anywhere MQTT is to be used.
+Introducing MQTT as a transport layer for MCP enables the protocol to be used in a wider range of applications, including edge computing, IoT, and cloud services — anywhere MQTT is to be used.
 
 ## Features
 

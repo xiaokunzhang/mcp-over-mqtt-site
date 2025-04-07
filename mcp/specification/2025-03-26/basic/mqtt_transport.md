@@ -4,7 +4,9 @@ title: MQTT Transport
 
 # The MQTT Transport for MCP
 
-This protocol defines the MQTT transport mechanism for client-server communication.
+This specification defines the MQTT-specific requirements like MQTT topics, QoS levels, and client ID formats. It also outlines the lifecycle of the MQTT transport, including service discovery, initialization, capability list changes, resource updates, and shutdown procedures.
+
+It should be read in conjunction with the [MCP Specification](https://spec.modelcontextprotocol.io/specification/2025-03-26/).
 
 ## Terminology
 

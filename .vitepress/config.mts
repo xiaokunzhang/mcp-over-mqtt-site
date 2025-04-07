@@ -53,25 +53,24 @@ export default withMermaid({
             link: '/mcp/',
           },
           {
+            text: 'Architecture',
+            link: '/mcp/specification/2025-03-26/basic/architecture',
+          },
+          {
             text: 'Use Cases',
             link: '/mcp/use-cases/',
           },
           {
-            text: 'Python SDK',
-            link: '/mcp/sdk/python/',
+            text: 'MQTT Transport',
+            link: '/mcp/specification/2025-03-26/basic/mqtt_transport',
           },
           {
-            text: 'Specification',
-            link: '/mcp/specification/',
+            text: 'SDKs',
             collapsed: false,
             items: [
               {
-                text: 'Architecture',
-                link: '/mcp/specification/2025-03-26/basic/architecture',
-              },
-              {
-                text: 'MQTT Transport',
-                link: '/mcp/specification/2025-03-26/basic/mqtt_transport',
+                text: 'Python SDK',
+                link: '/mcp/sdk/python/',
               },
             ],
           },
