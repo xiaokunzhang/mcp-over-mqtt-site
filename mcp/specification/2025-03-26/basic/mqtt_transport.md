@@ -16,6 +16,8 @@ It should be read in conjunction with the [MCP Specification](https://spec.model
 
   Multiple MCP Servers with different `server-name`s may still provide similar functions. In this case, when the client sends an initialize message, it should select one of them to establish a connection as needed. The selection criteria can be based on the client's permissions, recommendations from a LLM, or the user's choice.
 
+  After connected to the MQTT broker, the broker may suggest a `server-name` to the MCP server by including a `SERVER-NAME` user property in the MQTT CONNECT message. If so, the MCP server **MUST** use this `server-name` as its server name. If the broker does not suggest a `server-name`, the MCP server **SHOULD** use a default `server-name` based on the functionality it provides.
+
   The `server-name` must be a hierarchical topic style separated by `/` so that the client can subscribe to a certain type of MCP server using MQTT topic wildcards, for example: `server-type/sub-type/name`.
 
   The `server-name` should not `+` and `#` characters.
@@ -54,10 +56,15 @@ The QoS level for all PUBLISH and SUBSCRIBE messages **MUST** be 1.
 
 ## User Property
 
-For all MQTT PUBLISH messages, the following user properties **MUST** be set:
+For all `CONNECT` messages, the following user properties **MUST** be set:
+- `MCP-COMPONENT-TYPE`: `mcp-client` or `mcp-server`.
 
-- The `MCP-COMPONENT-TYPE` user property **MUST** be set to the MCP component type: `mcp-client` or `mcp-server`.
-- The `MQTT-CLIENT-ID` user property **MUST** be set to the MQTT client ID of the sender.
+For `CONNACK` messages sent by the broker, the following user properties **MAY** be set:
+- `SERVER-NAME`: The broker suggested server name for the MCP server.
+
+For all MQTT `PUBLISH` messages, the following user properties **MUST** be set:
+- `MCP-COMPONENT-TYPE`: `mcp-client` or `mcp-server`.
+- `MQTT-CLIENT-ID`: MQTT client ID of the sender.
 
 ## Session Expiry Interval
 
@@ -149,6 +156,7 @@ The "server/online" notification **SHOULD** provide only limited information abo
   "jsonrpc": "2.0",
   "method": "notifications/server/online",
   "params": {
+      "server_name": "example/server",
       "description": "This is a brief description about the functionalities provided by this MCP server to allow clients to choose as needed. If tools are provided, it explains what tools are available but does not include tool parameters to reduce message size.",
       "meta": {
         // Any metadata, such as hints about the permissions required to access this MCP server
