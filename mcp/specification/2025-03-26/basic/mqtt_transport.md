@@ -65,7 +65,7 @@ For `CONNACK` messages sent by the broker, the following user properties **MAY**
 
 For `PUBLISH` messages, the following user properties **MUST** be set:
 - `MCP-COMPONENT-TYPE`: `mcp-client` or `mcp-server`.
-- `MQTT-CLIENT-ID`: MQTT client ID of the sender.
+- `MCP-MQTT-CLIENT-ID`: MQTT client ID of the sender.
 
 ## Session Expiry Interval
 
