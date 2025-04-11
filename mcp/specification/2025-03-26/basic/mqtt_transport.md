@@ -16,7 +16,7 @@ It should be read in conjunction with the [MCP Specification](https://spec.model
 
   Multiple MCP Servers with different `server-name`s may still provide similar functions. In this case, when the client sends an initialize message, it should select one of them to establish a connection as needed. The selection criteria can be based on the client's permissions, recommendations from a LLM, or the user's choice.
 
-  After connected to the MQTT broker, the broker may suggest a `server-name` to the MCP server by including a `SERVER-NAME` user property in the MQTT CONNECT message. If so, the MCP server **MUST** use this `server-name` as its server name. If the broker does not suggest a `server-name`, the MCP server **SHOULD** use a default `server-name` based on the functionality it provides.
+  After connected to the MQTT broker, the broker may suggest a `server-name` to the MCP server by including a `MCP-SERVER-NAME` user property in the MQTT CONNECT message. If so, the MCP server **MUST** use this `server-name` as its server name. If the broker does not suggest a `server-name`, the MCP server **SHOULD** use a default `server-name` based on the functionality it provides.
 
   The `server-name` must be a hierarchical topic style separated by `/` so that the client can subscribe to a certain type of MCP server using MQTT topic wildcards, for example: `server-type/sub-type/name`.
 
@@ -56,13 +56,14 @@ The QoS level for all PUBLISH and SUBSCRIBE messages **MUST** be 1.
 
 ## User Property
 
-For all `CONNECT` messages, the following user properties **MUST** be set:
+For `CONNECT` messages, the following user properties **MUST** be set:
 - `MCP-COMPONENT-TYPE`: `mcp-client` or `mcp-server`.
 
 For `CONNACK` messages sent by the broker, the following user properties **MAY** be set:
-- `SERVER-NAME`: The broker suggested server name for the MCP server.
+- `MCP-SERVER-NAME`: The broker suggested server name for the MCP server.
+- `MCP-AUTH-ROLE`: The broker suggested role for the MCP client, which is used for a role-based access control (RBAC) mechanism.
 
-For all MQTT `PUBLISH` messages, the following user properties **MUST** be set:
+For `PUBLISH` messages, the following user properties **MUST** be set:
 - `MCP-COMPONENT-TYPE`: `mcp-client` or `mcp-server`.
 - `MQTT-CLIENT-ID`: MQTT client ID of the sender.
 
