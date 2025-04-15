@@ -36,15 +36,15 @@ It should be read in conjunction with the [MCP Specification](https://spec.model
 
 MCP over MQTT transmits messages through MQTT topics. This protocol includes the following message topics:  
 
-| Topic Name                       | Topic Name                                                             | Description                                                                        |
-|----------------------------------|------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| Server's Control Topic           | `$mcp-server/{server-name}`                                          | Used for sending and receiving initialization messages and other control messages. |
+| Topic Name                       | Topic Name                                                          | Description                                                                        |
+|----------------------------------|---------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| Server's Control Topic           | `$mcp-server/{server-id}/{server-name}`                             | Used for sending and receiving initialization messages and other control messages. |
 | Server's Capability Change Topic | `$mcp-server/capability/list-changed/{server-id}/{server-name}`     | Used for sending and receiving server capability list changed notification.        |
 | Server Resource Update Topic     | `$mcp-server/capability/resource-updated/{server-id}/{server-name}` | Used for sending and receiving server resource updated notification.               |
 | Server's Presence Topic          | `$mcp-server/presence/{server-id}/{server-name}`                    | Used for sending and receiving server's online/offline status messages.            |
-| Client's Presence Topic          | `$mcp-client/presence/{mcp-client-id}`                                 | Used for sending and receiving client's online/offline status messages.            |
-| Client's Capability Change Topic | `$mcp-client/capability/list-changed/{mcp-client-id}`                  | Used for sending and receiving client capability list changed notification.        |
-| RPC Topic                        | `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`                     | Used for sending and receiving RPC requests/responses, and notification messages.  |
+| Client's Presence Topic          | `$mcp-client/presence/{mcp-client-id}`                              | Used for sending and receiving client's online/offline status messages.            |
+| Client's Capability Change Topic | `$mcp-client/capability/list-changed/{mcp-client-id}`               | Used for sending and receiving client capability list changed notification.        |
+| RPC Topic                        | `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`                   | Used for sending and receiving RPC requests/responses, and notification messages.  |
 
 ## MQTT Protocol Version
 
@@ -87,7 +87,7 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 
 | Topic Filter                                          | Explanation                                                                                              |
 |-------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| `$mcp-server/{server-name}`                         | The control topic of the MCP server to receive control messages.                                         |
+| `$mcp-server/{server-id}/{server-name}`                         | The control topic of the MCP server to receive control messages.                                         |
 | `$mcp-client/capability/list-changed/{mcp-client-id}` | The MCP client’s capability change topic to receive capability list changed notification of the clients. |
 | `$mcp-client/presence/{mcp-client-id}`                | The MCP client’s presence topic to receive the disconnected notification of the clients.                 |
 | `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`    | The RPC topic to receive RPC requests, RPC responses, and notifications from a MCP client.               |
@@ -128,10 +128,10 @@ The Client ID of the MCP Client, referred to as `mcp-client-id`, can be any stri
 
 | Topic Name                                            | Messages                                                           |
 |-------------------------------------------------------|--------------------------------------------------------------------|
-| `$mcp-server/{server-name}`                         | Send control messages like the initialize request.                 |
+| `$mcp-server/{server-id}/{server-name}`               | Send control messages like the initialize request.                 |
 | `$mcp-client/capability/list-changed/{mcp-client-id}` | Send client capability list changed notification                   |
 | `$mcp-client/presence/{mcp-client-id}`                | Send disconnected notification for the MCP client.                 |
-| `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`    | The RPC topic to send RPC requests/responses to a specific server. |
+| `$mcp-rpc-endpoint/{mcp-client-id}/{server-name}`     | The RPC topic to send RPC requests/responses to a specific server. |
 
 ::: info
 - When connecting to the MQTT broker, the client **MUST** set `$mcp-client/presence/{mcp-client-id}` as the will topic with a "disconnected" notification as the payload to notify the server in case of an unexpected disconnection.
@@ -227,7 +227,7 @@ sequenceDiagram
   participant MCP_Server as MCP Server
 
   Note right of MCP_Client: Subscribe the<br/>server's RPC topic
-  MCP_Client ->> MCP_Server: Initialize Request<br/>Topic: $mcp-server/{server-name}
+  MCP_Client ->> MCP_Server: Initialize Request<br/>Topic: $mcp-server/{server-id}/{server-name}
   Note left of MCP_Server: Subscribe the<br/>client's RPC topic
   MCP_Server ->> MCP_Client: Initialize Response<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}
   MCP_Client ->> MCP_Server: Initialized<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}
@@ -235,7 +235,7 @@ sequenceDiagram
   MCP_Server ->> MCP_Client: RPC Req/Resp/Notification<br/>Topic: $mcp-rpc-endpoint/{mcp-client-id}/{server-name}
 ```
 
-The client **MUST** initiate this phase by sending an `initialize` request to the topic `$mcp-server/{server-name}` containing:
+The client **MUST** initiate this phase by sending an `initialize` request to the topic `$mcp-server/{server-id}/{server-name}` containing:
 
 - Protocol version supported
 - Client capabilities
